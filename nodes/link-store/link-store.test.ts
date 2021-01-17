@@ -1,12 +1,32 @@
 import test from 'tape'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { RedditNestable, RedditResponse, extractComments, flattenComments } from './link-store.lib'
+import { RedditNestable, RedditResponse, extractComments, flattenComments, Setup, Item } from './link-store.lib'
+import { Server, createServer } from 'http'
 
-const payload = JSON.parse(readFileSync(join(__dirname, 'fixture.json'), 'utf-8')) as RedditNestable<RedditResponse>[]
+const fixtureComments = JSON.parse(readFileSync(join(__dirname, 'fixture.json'), 'utf-8')) as RedditNestable<
+  RedditResponse
+>[]
+const fixtureArticle = readFileSync(join(__dirname, 'fixture-article.json'), 'utf-8')
+
+let server: Server
+const port = 54321
+
+test('setup', (assert) => {
+  server = createServer((req, res) => {
+    res.statusCode = 200
+    res.setHeader('Content-Type', 'application/json')
+    res.end(`${fixtureArticle}`)
+  })
+
+  server.listen(port, () => {
+    assert.comment(`Server running on port ${port}`)
+    assert.end()
+  })
+})
 
 test('extract comments', (assert) => {
-  const comments = extractComments(payload)
+  const comments = extractComments(fixtureComments)
 
   assert.deepEqual(comments, [
     {
@@ -284,9 +304,49 @@ test('extract comments', (assert) => {
   assert.end()
 })
 
-test('extract comments', (assert) => {
-  const comments = extractComments(payload).flatMap((it) => flattenComments(it))
+test('extract comments flatten', (assert) => {
+  const comments = extractComments(fixtureComments).flatMap((it) => flattenComments(it))
 
   assert.equal(comments.length, 55)
   assert.end()
 })
+
+test('Article link', async (assert) => {
+  const context = new MockContext()
+  const input = Setup({ node: { status: () => {} } as any, context })
+  await input(
+    { topic: 'REDDIT.V1', payload: { url: `http://localhost:${port}` }, _msgid: '1' },
+    () => assert.fail('Send'),
+    () => assert.pass(),
+  )
+  const keys = await context.keys()
+  assert.equal(keys.length, 1)
+  const item = await context.get<Item>(keys[0]!)
+  assert.equal(item.sourceType, 'REDDIT.V1')
+  assert.equal(item.sourceUrl, 'http://localhost:54321')
+  assert.equal(item.url, 'https://itnext.io/hardening-docker-and-kubernetes-with-seccomp-a88b1b4e2111')
+  assert.end()
+})
+
+test('tear down', (assert) => {
+  server.close(() => {
+    assert.end()
+  })
+})
+
+class MockContext {
+  private cache = new Map<string, unknown>()
+  async set<T = unknown>(key: string, value?: T) {
+    if (value === undefined) {
+      this.cache.delete(key)
+      return
+    }
+    this.cache.set(key, value)
+  }
+  async get<T = unknown>(key: string): Promise<T> {
+    return this.cache.get(key) as any
+  }
+  async keys() {
+    return Array.from(this.cache.keys())
+  }
+}

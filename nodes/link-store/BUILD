@@ -4,7 +4,7 @@ package(default_visibility = ["//visibility:public"])
 
 node(
     name = "link-store",
-    test_data = ["fixture.json"],
+    test_data = ["fixture.json", "fixture-article.json"],
     test_deps = [
         "//types",
         "@npm//@types/node",

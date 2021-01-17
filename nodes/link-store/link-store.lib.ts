@@ -18,7 +18,7 @@ type RedditLink = {
   createdAt: string
 }
 
-type Item = RedditLink
+export type Item = RedditLink
 
 export function Setup({ node, context }: { node: Node; context: AsyncContext }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
@@ -35,12 +35,13 @@ export function Setup({ node, context }: { node: Node; context: AsyncContext }) 
       case 'REDDIT.V1': {
         const links = [] as string[]
         try {
-          const response = await axios.get<RedditNestable<RedditResponse>[]>(`${action.payload.url}.json`)
+          const url = action.payload.url.endsWith('/') ? action.payload.url : `${action.payload.url}/`
+          const response = await axios.get<RedditNestable<RedditResponse>[]>(`${url}.json`)
           const selfText = response.data?.[0]?.data?.selftext_html
           const html = decodeHTMLEntities(selfText ?? '')
           const urls = getUrls(html)
           urls.forEach((it) => links.push(it))
-          const articleUrl = response.data?.[0]?.data?.url_overridden_by_dest
+          const articleUrl = response.data?.[0]?.data?.children?.[0]?.data?.url_overridden_by_dest
           if (isString(articleUrl)) {
             try {
               const url = new URL(articleUrl)
@@ -52,7 +53,9 @@ export function Setup({ node, context }: { node: Node; context: AsyncContext }) 
             const urls = getUrls(comment)
             urls.forEach((it) => links.push(it))
           })
-        } catch {}
+        } catch (error) {
+          console.log(error)
+        }
         for (const link of links
           .filter(onlyUnique)
           .filter((it) => !it.includes('np.reddit.com/message/compose'))
@@ -111,9 +114,11 @@ function time() {
 }
 
 export interface RedditNestable<T = {}> {
-  kind: string
+  kind: 'Listing' | 't3'
   data: T & {
     children: Array<RedditNestable<T>>
+    after?: string | null
+    before?: string | null
   }
 }
 export interface RedditResponse {
@@ -124,6 +129,7 @@ export interface RedditResponse {
   replies?: string | RedditNestable
   body_html?: string
   body?: string
+  url?: string
 }
 
 function uuid() {
