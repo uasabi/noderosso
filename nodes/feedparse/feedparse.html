@@ -1,0 +1,42 @@
+<script type="text/x-red" data-template-name="feedparse-evolution">
+  <div class="form-row">
+    <label for="node-input-url"><i class="fa fa-globe"></i> Feed url</label>
+    <input type="text" id="node-input-url">
+  </div>
+  <div class="form-row">
+    <label for="node-input-ttl"><i class="fa fa-globe"></i> TTL</label>
+    <input type="text" id="node-input-ttl" placeholder="one day">
+  </div>
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+</script>
+
+<script type="text/x-red" data-help-name="feedparse-evolution">
+  <p>Monitors an RSS/atom feed for new entries.</p>
+  <p>The <code>msg.topic</code> contains the original article link. The <code>msg.payload</code>
+  contains the description, and <code>msg.article</code> contains the complete article object,
+  which has properties such as <code>.title</code>, <code>.summary</code>, <code>.date</code> and so on.</p>
+</script>
+
+<script type="text/javascript">
+  RED.nodes.registerType('feedparse-evolution', {
+    category: 'advanced-input',
+    color: '#C0DEED',
+    defaults: {
+      name: { value: '' },
+      url: { value: '', required: true },
+      ttl: {
+        value: 'one day',
+        required: true,
+      },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: 'feed.png',
+    label: function () {
+      return this.name || this.url || 'feedparser-evolution'
+    },
+  })
+</script>

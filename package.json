@@ -1,0 +1,64 @@
+{
+  "name": "noderosso",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "ibazel run node-red",
+    "test": "bazelisk test all --test_output=all",
+    "fmt": "bazelisk run //nodes:tsfmt",
+    "container:build": "bazelisk build :server --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64",
+    "container:upload": "bazelisk run upload --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@mozilla/readability": "^0.3.0",
+    "axios": "^0.20.0",
+    "chrono-node": "^2.1.9",
+    "emailjs-imap-client": "^3.1.0",
+    "hast-util-raw": "^6.0.1",
+    "hast-util-select": "^4.0.0",
+    "hast-util-to-html": "^7.1.1",
+    "hast-util-to-string": "^1.0.3",
+    "human-interval": "^1.0.0",
+    "jsdom": "^16.4.0",
+    "mailparser": "^2.8.0",
+    "node-red": "^1.2.7",
+    "node-red-contrib-rss": "^0.1.5",
+    "node-red-contrib-sendgrid": "^0.2.1",
+    "normalize-url": "^5.3.0",
+    "pg": "^8.3.0",
+    "rss-parser": "^3.8.0",
+    "timezone-support": "^2.0.2",
+    "unist-diff": "^2.0.0",
+    "unist-util-visit": "^2.0.3",
+    "wink-distance": "^2.0.0",
+    "wink-naive-bayes-text-classifier": "^2.0.1",
+    "wink-nlp-utils": "^2.0.6",
+    "zod": "^1.11.0"
+  },
+  "devDependencies": {
+    "@bazel/bazelisk": "^1.7.3",
+    "@bazel/ibazel": "^0.14.0",
+    "@bazel/typescript": "^2.0.2",
+    "@types/express": "^4.17.7",
+    "@types/human-interval": "^1.0.0",
+    "@types/jsdom": "^16.2.5",
+    "@types/mailparser": "^2.7.3",
+    "@types/node": "^14.0.14",
+    "@types/pg": "^7.14.4",
+    "@types/tape": "^4.13.0",
+    "@types/xml2js": "^0.4.5",
+    "husky": "^4.2.5",
+    "prettier": "^2.0.5",
+    "tape": "^5.0.1",
+    "typescript": "^3.9.6"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm test"
+    }
+  }
+}

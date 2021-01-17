@@ -1,0 +1,31 @@
+<script type="text/javascript">
+  RED.nodes.registerType('lrucache', {
+    category: 'stateful',
+    color: '#a6bbcf',
+    defaults: {
+      name: { value: '' },
+      ttl: { value: 'one minute', required: true },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: 'file.png',
+    label: function () {
+      return this.name || 'LRU cache'
+    },
+  })
+</script>
+
+<script type="text/html" data-template-name="lrucache">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+      <label for="node-input-ttl"><i class="icon-tag"></i> TTL</label>
+      <input type="text" id="node-input-ttl">
+  </div>
+</script>
+
+<script type="text/html" data-help-name="lrucache">
+  <p>A simple node that expires keys after some time. The messages are emitted once the TTL expires.</p>
+</script>

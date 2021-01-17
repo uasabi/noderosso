@@ -1,0 +1,12 @@
+node_modules/
+.config.json
+.config.json.backup
+.flows.json.backup
+flows_cred.json
+context/
+nodes/*.js
+nodes/*.js.map
+types/*.js
+types/*.js.map
+.flows_cred.json.backup
+bazel-*

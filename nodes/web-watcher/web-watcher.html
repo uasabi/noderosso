@@ -1,0 +1,41 @@
+<script type="text/x-red" data-template-name="web-watcher">
+  <div class="form-row">
+    <label for="node-input-url"><i class="fa fa-globe"></i> URL</label>
+    <input type="text" id="node-input-url">
+  </div>
+  <div class="form-row">
+    <label for="node-input-selector"><i class="fa fa-globe"></i> Selector</label>
+    <input type="text" id="node-input-selector" placeholder="body">
+  </div>
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+</script>
+
+<script type="text/x-red" data-help-name="web-watcher">
+  <p>Monitors web pages for changes.</p>
+  <p>The <code>msg.payload</code> contains the new page. The <code>msg.previous</code>
+  contains the old page.</p>
+</script>
+
+<script type="text/javascript">
+  RED.nodes.registerType('web-watcher', {
+    category: 'monitor',
+    color: '#C0DEED',
+    defaults: {
+      name: { value: '' },
+      url: { value: '', required: true },
+      selector: {
+        value: 'body',
+        required: true,
+      },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: 'file.png',
+    label: function () {
+      return this.name || this.url || 'web-watcher'
+    },
+  })
+</script>

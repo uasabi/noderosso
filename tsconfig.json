@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "core/*": ["*", "bazel-bin/*", "bazel-genfiles/*"]
+    },
+    "target": "ES2016",
+    "module": "commonjs",
+    "lib": ["es2017", "dom", "esnext.array", "es2020.string"],
+    "jsx": "react",
+    "sourceMap": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true
+  },
+  "exclude": ["bazel-*", "node_modules"]
+}
