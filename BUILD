@@ -15,6 +15,7 @@ NODES = [
     "//nodes/mercury",
     "//nodes/postgres",
     "//nodes/web-watcher",
+    "//nodes/reddit-scraper",
 ]
 
 exports_files([
@@ -73,7 +74,7 @@ container_push(
     image = ":server",
     registry = "learnk8sregistry.azurecr.io",
     repository = "noderosso",
-    tag = "2021.01.006",
+    tag = "2021.01.007",
 )
 
 test_suite(
