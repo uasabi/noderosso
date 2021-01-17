@@ -44,7 +44,6 @@ export function Setup({ node }: { node: Node }) {
             if (isComplete) {
               break
             }
-            console.log('fetching ', `${subredditUrl}${nextId ? `?after=${nextId}` : ''}`)
             const response = await axios.get<RedditNestable<RedditResponse>>(
               `${subredditUrl}${nextId ? `?after=${nextId}` : ''}`,
             )
@@ -66,7 +65,6 @@ export function Setup({ node }: { node: Node }) {
                 }
               })
             nextId = after as any
-            console.log('nextid', isComplete, nextId)
           }
           if (i === 10 && !isComplete) {
             node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}. Reached max fetches, still not enough` })
