@@ -3,7 +3,7 @@ import { AsyncContext } from '../context'
 import { Actions, Events, Event } from './iprivilege.common'
 import { axios, prettyAxiosErrors, AxiosResponse } from '../axios'
 import querystring from 'querystring'
-import { add, isBefore, sub, format } from 'date-fns'
+import { add, sub, format, startOfDay } from 'date-fns'
 import * as chrono from 'chrono-node'
 
 export function Setup({
@@ -52,7 +52,9 @@ export function Setup({
             continue
           }
 
-          if (!booking.booked) {
+          const isPastBooking = startOfDay(new Date(booking.date)).valueOf() < startOfDay(nowInSgt()).valueOf()
+
+          if (!booking.booked || isPastBooking) {
             await context.set(key)
             continue
           }
@@ -82,6 +84,8 @@ export function Setup({
         const facilityId = 'dc49caa7-bbe3-4031-8757-fd3a574664a8'
         const facilityName = 'Tennis Court'
 
+        let sessionId: string | null | LoginError | InvalidCredentials = null
+
         const keys = await context.keys()
         for (const key of keys) {
           const booking = await context.get<Booking>(key)
@@ -90,16 +94,25 @@ export function Setup({
             continue
           }
 
-          if (booking.booked || isBefore(new Date(booking.date), sub(new Date(), { days: 7 }))) {
+          if (booking.booked) {
             continue
           }
 
-          const sessionId = await createSession({ email, password, propertyId })
+          const isTooFarInTheFuture =
+            sub(startOfDay(new Date(booking.date)), { days: 7 }).valueOf() > startOfDay(nowInSgt()).valueOf()
+          if (isTooFarInTheFuture) {
+            continue
+          }
+
+          if (!sessionId) {
+            sessionId = await createSession({ email, password, propertyId })
+          }
 
           if (sessionId instanceof Error) {
             node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
             node.error(`Error while creating a session:\n[${sessionId.name}]: ${sessionId.message}`)
             send(Event.failedBooking({ date: booking.date }))
+            sessionId = null
             continue
           }
 
@@ -129,6 +142,10 @@ export function Setup({
         break
     }
   }
+}
+
+function nowInSgt() {
+  return add(new Date(), { hours: 8 }) // SGT
 }
 
 interface Booking {
@@ -239,34 +256,6 @@ async function bookCourt({
     return format(date, `HH:'00'`)
   }
 
-  console.log(
-    'https://iprivilege.kfpam.com.sg/Home/NewFacilityBooking',
-    {
-      id: facilityId,
-      name: facilityName,
-      ts: `${formatDate(startingDatetime)} - ${formatDate(add(startingDatetime, { hours: 1 }))},0.00,r`,
-      d: format(startingDatetime, `d/LLL/yyyy '00:00:00'`),
-      invoiceNo: format(new Date(), `'395f754a'yyMMddhhmmss`), // 395f754a fixed, YYMMDDHHMMSS
-      amount: '0.00',
-      paymentMethod: 'CA',
-      paymentMethod2: 'CA',
-      type: 'r',
-      q: 4,
-      qp: 0,
-      ti: 'w',
-      tip: 'd',
-      tit: 't',
-      ft: 'tc',
-      l: 1,
-      bookedfor: userId,
-      dp: '0.00',
-      tf: '0.00',
-      admf: '0.00',
-      IsCon: 'N',
-    },
-    { headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: `ASP.NET_SessionId=${sessionId}` } },
-  )
-
   let response: AxiosResponse
   try {
     response = await axios.post<string | 1>(
@@ -277,7 +266,7 @@ async function bookCourt({
         r: undefined,
         ts: `${formatDate(startingDatetime)} - ${formatDate(add(startingDatetime, { hours: 1 }))},0.00,r`,
         d: format(startingDatetime, `d/LLL/yyyy '00:00:00'`),
-        invoiceNo: format(new Date(), `'395f754a'yyMMddhhmmss`), // 395f754a fixed, YYMMDDHHMMSS
+        invoiceNo: format(nowInSgt(), `'395f754a'yyMMddhhmmss`), // 395f754a fixed, YYMMDDHHMMSS
         refNo: undefined,
         amount: '0.00',
         paymentMethod: 'CA',

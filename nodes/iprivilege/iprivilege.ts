@@ -54,9 +54,9 @@ module.exports = function (RED: Red) {
     const form = [
       '<div class="bg-washed-blue pa3 ba bw1 b--light-gray br2 mt4">',
       `  <form action="/admin/iprivilege/${nodeId}" method="POST">`,
-      '    <label for="date" class="db f3">Enter a date and a time <small class="f5">(for example "next week at 7am")</small></label>',
+      '    <label for="date" class="db f3">Enter a date and time <small class="f5">(for example "next week at 7am")</small></label>',
       '    <input type="text" id="date" name="date" class="mv3 input-reset ba w-100 br2 bg-white f4 pv2 ph3 b--silver"/>',
-      '    <input type="submit" id="submit" name="submit" value="Book" class="input-reset bn pv2 bg-navy white db w-100 ttu b f4"/>',
+      '    <input type="submit" id="submit" name="submit" value="Book" class="input-reset bn pv2 bg-navy white db w-100 ttu b f4 br1"/>',
       '  </form>',
       '</div>',
     ]
@@ -74,14 +74,16 @@ module.exports = function (RED: Red) {
       }
 
       entries += [
-        `<li class="mv3 flex pa2 items-center ${index % 2 ? 'bg-washed-yellow' : ''}">`,
-        `<p class="lh-copy f4">Booking for <span class="b">${format(
+        `<li class="mv3 flex pv2 ph4 items-center justify-between ${index % 2 ? 'bg-washed-yellow' : ''}">`,
+        '  <div class="flex items-center">',
+        `    <p class="lh-copy f4">Booking for <span class="b">${format(
           new Date(booking.date),
           `PPP 'at' h aaaa`,
         )}</span></p>`,
-        booking.booked ? `<p class="ml3 ttu bg-green pv1 ph2 br2 f6 b">Booked</p>` : '',
-        !booking.booked ? '<p class="ml3 ttu bg-yellow pv1 ph2 br2 f6 b">Pending</p>' : '',
-        `<div><form action="/admin/iprivilege/${nodeId}" method="POST"><input type="hidden" value="${booking.id}" name="id"/><input type="submit" name="delete" value="Delete booking" class="ml3 ttu bg-light-gray pv1 ph2 br2 f6 b bn"/></form></div>`,
+        booking.booked ? `<p class="ml3 ttu bg-green white pv1 ph2 br2 f7 b">Booked</p>` : '',
+        !booking.booked ? '<p class="ml3 ttu bg-yellow pv1 ph2 br2 f7 b">Pending</p>' : '',
+        '  </div>',
+        `  <div><form action="/admin/iprivilege/${nodeId}" method="POST"><input type="hidden" value="${booking.id}" name="id"/><input type="submit" name="delete" value="Delete booking" class="ml3 ttu bg-light-gray pv1 ph2 br2 f6 b bn pointer"/></form></div>`,
         '</li>',
       ].join('')
     }
