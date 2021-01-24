@@ -11,6 +11,9 @@
     <label for="node-input-password"><i class="fa fa-tag"></i> Password</label>
     <input type="password" id="node-input-password">
   </div>
+  <div class="form-row">
+    <a href="#" target="_blank" id="iprivilege-admin" class="ui-button ui-corner-all ui-widget primary">Click here to open the admin interface</a>
+  </div>
 </script>
 
 <script type="text/x-red" data-help-name="iprivilege">
@@ -34,5 +37,8 @@
     label: function () {
       return this.name || this.url || 'iprivilege'
     },
+    oneditprepare: function () {
+      $('#iprivilege-admin').prop('href', `/admin/iprivilege/${this.id}`)
+    }
   })
 </script>

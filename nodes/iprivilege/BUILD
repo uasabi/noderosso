@@ -4,6 +4,7 @@ package(default_visibility = ["//visibility:public"])
 
 node(
     name = "iprivilege",
+    data = ["tachyons.min.4.12.0.css"],
     test_deps = [
         "//types",
         "@npm//@types/node",
@@ -14,10 +15,11 @@ node(
         "//nodes:axios",
         "//nodes:worker_node",
         "//types",
+        "@npm//@types/express",
         "@npm//@types/node",
         "@npm//chrono-node",
         "@npm//date-fns",
-        "@npm//date-fns-tz",
+        "@npm//express",
         "@npm//node-red",
         "@npm//zod",
     ],

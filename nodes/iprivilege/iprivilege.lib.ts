@@ -3,8 +3,7 @@ import { AsyncContext } from '../context'
 import { Actions, Events, Event } from './iprivilege.common'
 import { axios, prettyAxiosErrors, AxiosResponse } from '../axios'
 import querystring from 'querystring'
-import { add, isBefore, sub } from 'date-fns'
-import { zonedTimeToUtc, utcToZonedTime, format } from 'date-fns-tz'
+import { add, isBefore, sub, format } from 'date-fns'
 import * as chrono from 'chrono-node'
 
 export function Setup({
@@ -40,7 +39,43 @@ export function Setup({
           node.warn(`Ignoring invalid date ${action.payload.date}`)
           return done()
         }
-        await context.set<Booking>(uuid(), { date: startDatetime.toISOString(), booked: false })
+        const id = uuid()
+        await context.set<Booking>(id, { id, date: startDatetime.toISOString(), booked: false })
+        return done()
+      }
+      case 'CANCEL.V1': {
+        const keys = await context.keys()
+        for (const key of keys) {
+          const booking = await context.get<Booking>(key)
+
+          if (!booking || key !== action.payload.bookingId) {
+            continue
+          }
+
+          if (!booking.booked) {
+            await context.set(key)
+            continue
+          }
+
+          const sessionId = await createSession({ email, password, propertyId })
+
+          if (sessionId instanceof Error) {
+            node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
+            node.error(`Error while creating a session:\n[${sessionId.name}]: ${sessionId.message}`)
+            send(Event.failedBooking({ date: booking.date }))
+            continue
+          }
+
+          const isCancelled = await cancelBooking({ sessionId, bookingId: booking.externalBookingId! })
+
+          if (isCancelled instanceof Error) {
+            node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
+            node.error(`Error while cancelling a booking:\n[${isCancelled.name}]: ${isCancelled.message}`)
+            continue
+          }
+
+          await context.set(key)
+        }
         return done()
       }
       case 'TICK.V1': {
@@ -55,15 +90,16 @@ export function Setup({
             continue
           }
 
-          // if (booking.booked || isBefore(new Date(booking.date), sub(new Date(), { days: 7 }))) {
-          //   continue
-          // }
+          if (booking.booked || isBefore(new Date(booking.date), sub(new Date(), { days: 7 }))) {
+            continue
+          }
 
           const sessionId = await createSession({ email, password, propertyId })
 
           if (sessionId instanceof Error) {
             node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
             node.error(`Error while creating a session:\n[${sessionId.name}]: ${sessionId.message}`)
+            send(Event.failedBooking({ date: booking.date }))
             continue
           }
 
@@ -78,10 +114,11 @@ export function Setup({
           if (bookingId instanceof Error) {
             node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
             node.error(`Error while submitted the booking:\n[${bookingId.name}]: ${bookingId.message}`)
+            send(Event.failedBooking({ date: booking.date }))
             continue
           }
 
-          await context.set<Booking>(key, { ...booking, externalBookingId: bookingId })
+          await context.set<Booking>(key, { ...booking, externalBookingId: bookingId, booked: true })
           send(Event.confirmedBooking({ date: booking.date }))
           node.status({ fill: 'green', shape: 'dot', text: `Booked ${booking.date} ${time()}` })
         }
@@ -95,6 +132,7 @@ export function Setup({
 }
 
 interface Booking {
+  id: string
   date: string
   booked: boolean
   externalBookingId?: string
@@ -198,7 +236,7 @@ async function bookCourt({
   facilityName: string
 }): Promise<string | SessionExpired | GenericError | InvalidBooking> {
   const formatDate = (date: Date) => {
-    return format(date, `HH:'00'`, { timeZone: 'Asia/Singapore' })
+    return format(date, `HH:'00'`)
   }
 
   console.log(
@@ -207,8 +245,8 @@ async function bookCourt({
       id: facilityId,
       name: facilityName,
       ts: `${formatDate(startingDatetime)} - ${formatDate(add(startingDatetime, { hours: 1 }))},0.00,r`,
-      d: format(startingDatetime, `d/LLL/yyyy '00:00:00'`, { timeZone: 'Asia/Singapore' }),
-      invoiceNo: format(new Date(), `'395f754a'yyMMddhhmmss`, { timeZone: 'Asia/Singapore' }), // 395f754a fixed, YYMMDDHHMMSS
+      d: format(startingDatetime, `d/LLL/yyyy '00:00:00'`),
+      invoiceNo: format(new Date(), `'395f754a'yyMMddhhmmss`), // 395f754a fixed, YYMMDDHHMMSS
       amount: '0.00',
       paymentMethod: 'CA',
       paymentMethod2: 'CA',
@@ -228,7 +266,6 @@ async function bookCourt({
     },
     { headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: `ASP.NET_SessionId=${sessionId}` } },
   )
-  return new GenericError('Oops')
 
   let response: AxiosResponse
   try {
@@ -239,8 +276,8 @@ async function bookCourt({
         name: facilityName,
         r: undefined,
         ts: `${formatDate(startingDatetime)} - ${formatDate(add(startingDatetime, { hours: 1 }))},0.00,r`,
-        d: format(startingDatetime, `d/LLL/yyyy '00:00:00'`, { timeZone: 'Asia/Singapore' }),
-        invoiceNo: format(new Date(), `'395f754a'yyMMddhhmmss`, { timeZone: 'Asia/Singapore' }), // 395f754a fixed, YYMMDDHHMMSS
+        d: format(startingDatetime, `d/LLL/yyyy '00:00:00'`),
+        invoiceNo: format(new Date(), `'395f754a'yyMMddhhmmss`), // 395f754a fixed, YYMMDDHHMMSS
         refNo: undefined,
         amount: '0.00',
         paymentMethod: 'CA',
@@ -280,18 +317,18 @@ async function bookCourt({
 
 async function cancelBooking({
   sessionId,
-  bookindId,
+  bookingId,
 }: {
   sessionId: string
-  bookindId: string
-}): Promise<boolean | SessionExpired | GenericError> {
+  bookingId: string
+}): Promise<boolean | SessionExpired | GenericError | InvalidBooking> {
   let response: AxiosResponse
 
   try {
     response = await axios.post<0 | 1>(
       'https://iprivilege.kfpam.com.sg/Home/CancelBooking',
       querystring.stringify({
-        id: bookindId,
+        id: bookingId,
       }),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: `ASP.NET_SessionId=${sessionId}` } },
     )
@@ -303,7 +340,11 @@ async function cancelBooking({
     })
   }
 
-  return response.data === 0
+  if (response.data !== 0) {
+    return new InvalidBooking('The booking does not exist or ... ?')
+  }
+
+  return true
 }
 
 function uuid() {
