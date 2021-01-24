@@ -16,6 +16,7 @@ NODES = [
     "//nodes/postgres",
     "//nodes/web-watcher",
     "//nodes/reddit-scraper",
+    "//nodes/iprivilege",
 ]
 
 exports_files([

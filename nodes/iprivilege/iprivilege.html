@@ -1,0 +1,38 @@
+<script type="text/x-red" data-template-name="iprivilege">
+  <div class="form-row">
+    <label for="node-input-email"><i class="fa fa-tag"></i> Email</label>
+    <input type="text" id="node-input-email" placeholder="">
+  </div>
+  <div class="form-row">
+    <label for="node-input-userid"><i class="fa fa-tag"></i> User id</label>
+    <input type="text" id="node-input-userid" placeholder="">
+  </div>
+  <div class="form-row">
+    <label for="node-input-password"><i class="fa fa-tag"></i> Password</label>
+    <input type="password" id="node-input-password">
+  </div>
+</script>
+
+<script type="text/x-red" data-help-name="iprivilege">
+  <p>Monitors iprivilege and books the tennis court.</p>
+</script>
+
+<script type="text/javascript">
+  RED.nodes.registerType('iprivilege', {
+    category: 'monitor',
+    color: '#C0DEED',
+    defaults: {
+      email: { value: '', required: true },
+      userid: { value: '', required: true },
+    },
+    credentials: {
+      password: { type: 'password', required: true },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: 'file.png',
+    label: function () {
+      return this.name || this.url || 'iprivilege'
+    },
+  })
+</script>
