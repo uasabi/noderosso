@@ -4,6 +4,7 @@ import { asyncContext } from '../context'
 import { simpleParser } from 'mailparser'
 import { Actions, Events, Event, isGmailEmail } from './imap-reader.common'
 import { inspect } from 'util'
+import { parseDate } from 'chrono-node'
 
 export function Setup({
   username: user,
@@ -42,12 +43,12 @@ export function Setup({
         })
         try {
           await imap.connect()
-          const mailbox = action.payload.mailbox.toUpperCase()
-          const since = action.payload.since ? new Date(action.payload.since) : null
-          const before = action.payload.before ? new Date(action.payload.before) : null
+          const mailbox = action.payload.mailbox
+          const since = parseDate(action.payload.since ?? '')
+          const before = parseDate(action.payload.before ?? '')
           const query = {
-            ...(isValidDate(since) ? { since } : {}),
-            ...(isValidDate(before) ? { before } : {}),
+            ...(since ? { since } : {}),
+            ...(before ? { before } : {}),
           }
 
           const messageIds = await imap.search(mailbox, query)

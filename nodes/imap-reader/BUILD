@@ -15,6 +15,7 @@ node(
         "//types",
         "@npm//@types/mailparser",
         "@npm//@types/node",
+        "@npm//chrono-node",
         "@npm//emailjs-imap-client",
         "@npm//mailparser",
         "@npm//node-red",

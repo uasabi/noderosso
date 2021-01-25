@@ -7,7 +7,7 @@ import hastParser from 'hast-util-raw'
 import { selectAll } from 'hast-util-select'
 import * as Hast from 'hast'
 import normalizeUrl from 'normalize-url'
-import tall from 'tall'
+import { axios } from '../axios'
 
 type RedditLink = {
   id: string
@@ -42,11 +42,7 @@ export function Setup({ node, context }: { node: Node; context: AsyncContext }) 
       case 'GENERIC.V1': {
         const links = await unshortenUrls(getUrls(action.payload.text))
 
-        if (links.failed.length > 0) {
-          node.error(`Failed to parse the following urls: ${links.failed.join(' ')}`)
-        }
-
-        for (const link of links.parsed) {
+        for (const link of links) {
           const id = generateId()
           await context.set<GenericLink>(id, {
             id,
@@ -69,11 +65,7 @@ export function Setup({ node, context }: { node: Node; context: AsyncContext }) 
 
         const unshortenedLinks = await unshortenUrls(links)
 
-        if (unshortenedLinks.failed.length > 0) {
-          node.error(`Failed to parse the following urls: ${unshortenedLinks.failed.join(' ')}`)
-        }
-
-        for (const link of (await unshortenedLinks).parsed
+        for (const link of (await unshortenedLinks)
           .filter((it) => !it.includes('np.reddit.com/message/compose'))
           .filter((it) => !it.includes('np.reddit.com/r/RemindMeBot'))) {
           const id = generateId()
@@ -101,11 +93,7 @@ export function Setup({ node, context }: { node: Node; context: AsyncContext }) 
 
         const unshortenedLinks = await unshortenUrls(links)
 
-        if (unshortenedLinks.failed.length > 0) {
-          node.error(`Failed to parse the following urls: ${unshortenedLinks.failed.join(' ')}`)
-        }
-
-        for (const link of unshortenedLinks.parsed
+        for (const link of unshortenedLinks
           .filter((it) => !it.includes('np.reddit.com/message/compose'))
           .filter((it) => !it.includes('np.reddit.com/r/RemindMeBot'))) {
           const id = generateId()
@@ -215,16 +203,20 @@ function getUrls(html: string): string[] {
   return urls.map((it) => normalizeUrl(it, { defaultProtocol: 'https:' })).filter(onlyUnique)
 }
 
-async function unshortenUrls(urls: string[]): Promise<{ parsed: string[]; failed: string[] }> {
+async function unshortenUrls(urls: string[]): Promise<string[]> {
   const parsed = []
-  const failed = []
   for (const url of urls) {
-    try {
-      const originalLink = await tall(url, { method: 'HEAD' })
-      parsed.push(originalLink)
-    } catch {
-      failed.push(url)
-    }
+    const originalLink = await unwrap(url)
+    parsed.push(originalLink)
   }
-  return { parsed: parsed.map((it) => normalizeUrl(it, { defaultProtocol: 'https:' })).filter(onlyUnique), failed }
+  return parsed.map((it) => normalizeUrl(it, { defaultProtocol: 'https:' })).filter(onlyUnique)
+}
+
+async function unwrap(url: string): Promise<string> {
+  try {
+    const response = await axios(url, { method: 'HEAD' })
+    return response.request.res.responseUrl
+  } catch {}
+
+  return url
 }

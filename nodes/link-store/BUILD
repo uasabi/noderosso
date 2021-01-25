@@ -25,7 +25,6 @@ node(
         "@npm//human-interval",
         "@npm//node-red",
         "@npm//normalize-url",
-        "@npm//tall",
         "@npm//zod",
     ],
 )
