@@ -10,8 +10,8 @@ export function Setup({ node, baseUrl = 'https://www.reddit.com' }: { node: Node
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
     switch (action.topic) {
       case 'FETCH.V1': {
-        const from = action.payload.from ? chrono.parseDate(action.payload.from) : null
-        const to: Date = action.payload.to ? chrono.parseDate(action.payload.to) : new Date()
+        const from: Date | null = chrono.parseDate(action.payload.from ?? '')
+        const to: Date = chrono.parseDate(action.payload.to ?? '') ?? new Date()
         const subredditUrl = parseSubredditUrl(action.payload.subreddit, baseUrl)
 
         node.log(`Fetching ${subredditUrl} ${from ? `from ${from}` : '1 page'} until ${to.toISOString()}`)
