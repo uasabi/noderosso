@@ -13,6 +13,7 @@ declare module '~emailjs-imap-client/index' {
       },
     ): Promise<object[]>
     selectMailbox(name: string): Promise<OtherMailbox>
+    search(path: string, query: any, options?: { byUid: boolean }): Promise<string[]>
   }
 
   export interface ImapClientOptions {

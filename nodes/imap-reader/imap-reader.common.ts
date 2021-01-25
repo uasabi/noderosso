@@ -11,14 +11,23 @@ const Schema = {
   tick: Message.extend({
     topic: z.literal('FETCH.V1'),
   }),
+  search: Message.extend({
+    topic: z.literal('SEARCH.V1'),
+    payload: z.object({
+      mailbox: z.string().nonempty(),
+      since: z.string().optional(),
+      before: z.string().optional(),
+    }),
+  }),
   email: z.object({
     topic: z.literal('EMAIL.V1'),
     payload: z.object({
-      content: z.union([z.string().nonempty(), z.undefined()]),
+      receivedAt: z.string().nonempty().optional(),
+      content: z.string().nonempty().optional(),
       labels: z.array(z.string().nonempty()),
-      from: z.union([z.string().nonempty(), z.undefined()]),
-      to: z.union([z.string().nonempty(), z.undefined()]),
-      subject: z.union([z.string().nonempty(), z.undefined()]),
+      from: z.string().nonempty().optional(),
+      to: z.string().nonempty().optional(),
+      subject: z.string().nonempty().optional(),
     }),
   }),
   gmail: z
@@ -29,7 +38,7 @@ const Schema = {
     .nonstrict(),
 }
 
-export const actions = z.union([Schema.flush, Schema.tick])
+export const actions = z.union([Schema.flush, Schema.search, Schema.tick])
 export type Actions = z.infer<typeof actions>
 export const isAction = actions.check.bind(actions)
 export function upgradeAction(action: any, log: (message: string) => void): z.infer<typeof actions> {

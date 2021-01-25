@@ -1,14 +1,13 @@
 import { Node } from 'node-red'
 import { Actions, Events, Event } from './link-store.common'
-import { inspect } from 'util'
 import { URL } from 'url'
-import { axios, prettyAxiosErrors } from '../axios'
 import { AsyncContext } from '../context'
 import humanInterval from 'human-interval'
 import hastParser from 'hast-util-raw'
 import { selectAll } from 'hast-util-select'
 import * as Hast from 'hast'
 import normalizeUrl from 'normalize-url'
+import tall from 'tall'
 
 type RedditLink = {
   id: string
@@ -18,7 +17,15 @@ type RedditLink = {
   createdAt: string
 }
 
-export type Item = RedditLink
+type GenericLink = {
+  id: string
+  url: string
+  sourceType: 'GENERIC.V1'
+  sourceUrl: string
+  createdAt: string
+}
+
+export type Item = RedditLink | GenericLink
 
 export function Setup({ node, context }: { node: Node; context: AsyncContext }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
@@ -32,41 +39,82 @@ export function Setup({ node, context }: { node: Node; context: AsyncContext }) 
         node.status({})
         return done()
       }
-      case 'REDDIT.V1': {
-        const links = [] as string[]
-        try {
-          const url = action.payload.url.endsWith('/') ? action.payload.url : `${action.payload.url}/`
-          const response = await axios.get<RedditNestable<RedditResponse>[]>(`${url}.json`)
-          const selfText = response.data?.[0]?.data?.selftext_html
-          const html = decodeHTMLEntities(selfText ?? '')
-          const urls = getUrls(html)
-          urls.forEach((it) => links.push(it))
-          const articleUrl = response.data?.[0]?.data?.children?.[0]?.data?.url_overridden_by_dest
-          if (isString(articleUrl)) {
-            try {
-              const url = new URL(articleUrl)
-              links.push(url.toString())
-            } catch {}
-          }
-          const comments = extractComments(response.data).flatMap((it) => flattenComments(it))
-          comments.forEach((comment) => {
-            const urls = getUrls(comment)
-            urls.forEach((it) => links.push(it))
-          })
-        } catch (error) {
-          console.log(error)
+      case 'GENERIC.V1': {
+        const links = await unshortenUrls(getUrls(action.payload.text))
+
+        if (links.failed.length > 0) {
+          node.error(`Failed to parse the following urls: ${links.failed.join(' ')}`)
         }
-        for (const link of links
-          .filter(onlyUnique)
+
+        for (const link of links.parsed) {
+          const id = generateId()
+          await context.set<GenericLink>(id, {
+            id,
+            sourceType: 'GENERIC.V1',
+            sourceUrl: action.payload.url,
+            url: link,
+            createdAt: action.payload.createdAt,
+          })
+        }
+        node.status({ fill: 'green', shape: 'dot', text: `Last added ${action._msgid} ${time()}` })
+        return done()
+      }
+      case 'REDDIT_SELF.V1': {
+        const replies: string[] = action.payload.replies.flatMap((it: RedditReply) => flattenReplies(it))
+
+        const links = [action.payload.text, ...replies].reduce((acc, text) => {
+          const urls = getUrls(text)
+          return [...acc, ...urls]
+        }, [] as string[])
+
+        const unshortenedLinks = await unshortenUrls(links)
+
+        if (unshortenedLinks.failed.length > 0) {
+          node.error(`Failed to parse the following urls: ${unshortenedLinks.failed.join(' ')}`)
+        }
+
+        for (const link of (await unshortenedLinks).parsed
           .filter((it) => !it.includes('np.reddit.com/message/compose'))
           .filter((it) => !it.includes('np.reddit.com/r/RemindMeBot'))) {
           const id = generateId()
           await context.set<RedditLink>(id, {
             id,
             sourceType: 'REDDIT.V1',
-            sourceUrl: action.payload.url,
+            sourceUrl: action.payload.permalink,
             url: link,
-            createdAt: new Date().toISOString(),
+            createdAt: action.payload.createdAt,
+          })
+        }
+        node.status({ fill: 'green', shape: 'dot', text: `Last added ${action._msgid} ${time()}` })
+        return done()
+      }
+      case 'REDDIT_ARTICLE.V1': {
+        const replies: string[] = action.payload.replies.flatMap((it: RedditReply) => flattenReplies(it))
+
+        const links = [...replies].reduce(
+          (acc, text) => {
+            const urls = getUrls(text)
+            return [...acc, ...urls]
+          },
+          [action.payload.link] as string[],
+        )
+
+        const unshortenedLinks = await unshortenUrls(links)
+
+        if (unshortenedLinks.failed.length > 0) {
+          node.error(`Failed to parse the following urls: ${unshortenedLinks.failed.join(' ')}`)
+        }
+
+        for (const link of unshortenedLinks.parsed
+          .filter((it) => !it.includes('np.reddit.com/message/compose'))
+          .filter((it) => !it.includes('np.reddit.com/r/RemindMeBot'))) {
+          const id = generateId()
+          await context.set<RedditLink>(id, {
+            id,
+            sourceType: 'REDDIT.V1',
+            sourceUrl: action.payload.permalink,
+            url: link,
+            createdAt: action.payload.createdAt,
           })
         }
         node.status({ fill: 'green', shape: 'dot', text: `Last added ${action._msgid} ${time()}` })
@@ -113,25 +161,6 @@ function time() {
   return new Date().toISOString().substr(11, 5)
 }
 
-export interface RedditNestable<T = {}> {
-  kind: 'Listing' | 't3'
-  data: T & {
-    children: Array<RedditNestable<T>>
-    after?: string | null
-    before?: string | null
-  }
-}
-export interface RedditResponse {
-  title: string
-  selftext_html: string | null
-  selftext: string | null
-  url_overridden_by_dest?: string
-  replies?: string | RedditNestable
-  body_html?: string
-  body?: string
-  url?: string
-}
-
 function uuid() {
   return Math.random().toString(36).substring(7)
 }
@@ -140,69 +169,22 @@ function generateId() {
   return `${Date.now()}-${uuid()}`
 }
 
-interface NestedComment {
+interface RedditReply {
   text: string
-  replies: NestedComment[]
+  score: number
+  replies: RedditReply[]
+  createdAt: string
 }
 
-export function extractComments(payload: RedditNestable<RedditResponse>[]): NestedComment[] {
-  if (payload.length !== 2) {
-    return []
+export function flattenReplies(reply: RedditReply): string[] {
+  if (reply.replies.length === 0) {
+    return [reply.text]
   }
-  const comments = payload[1]!
-  return comments.data.children.map((it) => extract(it))
-
-  function extract(obj: RedditNestable<RedditResponse>): NestedComment {
-    const replies = obj?.data?.replies
-    const text = obj?.data?.body_html ?? ''
-    if (isNestable(replies)) {
-      return { text: decodeHTMLEntities(text), replies: replies.data.children.map((it) => extract(it as any)) }
-    }
-    return { text: decodeHTMLEntities(text), replies: [] }
-  }
-}
-
-export function flattenComments(comment: NestedComment): string[] {
-  if (comment.replies.length === 0) {
-    return [comment.text]
-  }
-  return [comment.text, ...comment.replies.flatMap((it) => flattenComments(it))]
-}
-
-function isNestable(value: unknown): value is RedditNestable {
-  return isObject(value) && hasOwnProperty(value, 'kind') && value.kind === 'Listing'
-}
-
-function isObject(obj: unknown): obj is object {
-  return {}.toString.call(obj) === '[object Object]' && obj != null
-}
-
-function hasOwnProperty<X extends {}, Y extends PropertyKey>(obj: X, prop: Y): obj is X & Record<Y, unknown> {
-  return obj.hasOwnProperty(prop)
+  return [reply.text, ...reply.replies.flatMap((it) => flattenReplies(it))]
 }
 
 function onlyUnique(value: string, index: number, self: string[]) {
   return self.indexOf(value) === index
-}
-
-function decodeHTMLEntities(text: string): string {
-  var entities = [
-    ['amp', '&'],
-    ['apos', "'"],
-    ['#x27', "'"],
-    ['#x2F', '/'],
-    ['#39', "'"],
-    ['#47', '/'],
-    ['lt', '<'],
-    ['gt', '>'],
-    ['nbsp', ' '],
-    ['quot', '"'],
-  ]
-
-  for (var i = 0, max = entities.length; i < max; ++i)
-    text = text.replace(new RegExp('&' + entities[i][0] + ';', 'g'), entities[i][1])
-
-  return text
 }
 
 function parseHtml(content: string) {
@@ -230,5 +212,19 @@ function getUrls(html: string): string[] {
         return false
       }
     }) as string[]
-  return urls.map((it) => normalizeUrl(it, { defaultProtocol: 'https:' }))
+  return urls.map((it) => normalizeUrl(it, { defaultProtocol: 'https:' })).filter(onlyUnique)
+}
+
+async function unshortenUrls(urls: string[]): Promise<{ parsed: string[]; failed: string[] }> {
+  const parsed = []
+  const failed = []
+  for (const url of urls) {
+    try {
+      const originalLink = await tall(url, { method: 'HEAD' })
+      parsed.push(originalLink)
+    } catch {
+      failed.push(url)
+    }
+  }
+  return { parsed: parsed.map((it) => normalizeUrl(it, { defaultProtocol: 'https:' })).filter(onlyUnique), failed }
 }

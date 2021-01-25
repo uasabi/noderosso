@@ -4,7 +4,12 @@ package(default_visibility = ["//visibility:public"])
 
 node(
     name = "reddit-scraper",
-    test_data = [],
+    test_data = [
+        "fixture.json",
+        "fixture-article.json",
+        "fixture-listing.json",
+        "fixture-self.json",
+    ],
     test_deps = [
         "//types",
         "@npm//@types/node",
