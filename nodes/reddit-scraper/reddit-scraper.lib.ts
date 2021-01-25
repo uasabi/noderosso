@@ -240,7 +240,7 @@ async function fetchPost(url: string): Promise<FetchingError | RedditLinkPost | 
   }
 
   const replies = extractReplies(response.data)
-  const createdAt = isNumber(response.data?.[0]?.data?.children?.[0].data?.created_utc)
+  const createdAt = isValidDate(new Date(response.data?.[0]?.data?.children?.[0].data.created_utc * 1000))
     ? new Date(response.data?.[0]?.data?.children?.[0].data.created_utc * 1000).toISOString()
     : new Date().toISOString()
 
@@ -276,19 +276,20 @@ export function extractReplies(payload: RedditNestable<RedditResponse>[]): Reddi
   function extract(obj: RedditNestable<RedditResponse>): RedditReply {
     const replies = obj?.data?.replies
     const text = obj?.data?.body_html ?? ''
+    const createdAt = new Date(obj.data.created_utc * 1000)
     if (isNestable(replies)) {
       return {
         text: decodeHTMLEntities(text),
         replies: replies.data.children.map((it) => extract(it as any)),
         score: obj.data.score,
-        createdAt: new Date(obj.data.created_utc * 1000).toISOString(),
+        createdAt: isValidDate(createdAt) ? createdAt.toISOString() : new Date().toISOString(),
       }
     }
     return {
       text: decodeHTMLEntities(text),
       replies: [],
       score: obj.data.score,
-      createdAt: new Date(obj.data.created_utc * 1000).toISOString(),
+      createdAt: isValidDate(createdAt) ? createdAt.toISOString() : new Date().toISOString(),
     }
   }
 }
@@ -372,4 +373,8 @@ interface RedditReply {
   score: number
   replies: RedditReply[]
   createdAt: string
+}
+
+function isValidDate(date: unknown): date is Date {
+  return date instanceof Date && !isNaN(date.valueOf())
 }
