@@ -20,6 +20,12 @@ NODES = [
     "//nodes/iprivilege",
 ]
 
+NODE_RED_PACKAGES = [
+    "@npm//node-red-contrib-rss",
+    "@npm//node-red-contrib-sendgrid",
+    "@npm//node-red-contrib-cheerio-function",
+]
+
 exports_files([
     "tsconfig.json",
     "package.json",
@@ -43,9 +49,7 @@ nodejs_binary(
     data = [
         "flows.json",
         "settings.js",
-        "@npm//node-red-contrib-rss",
-        "@npm//node-red-contrib-sendgrid",
-    ] + NODES,
+    ] + NODES + NODE_RED_PACKAGES,
     entry_point = "@npm//:node_modules/node-red/red.js",
 )
 
@@ -64,9 +68,7 @@ nodejs_image(
     data = [
         "start.sh",
         "@npm//node-red",
-        "@npm//node-red-contrib-rss",
-        "@npm//node-red-contrib-sendgrid",
-    ] + NODES,
+    ] + NODES + NODE_RED_PACKAGES,
     entry_point = "@npm//:node_modules/node-red/red.js",
 )
 
@@ -76,7 +78,7 @@ container_push(
     image = ":server",
     registry = "learnk8sregistry.azurecr.io",
     repository = "noderosso",
-    tag = "2021.01.017",
+    tag = "2021.01.018",
 )
 
 test_suite(
