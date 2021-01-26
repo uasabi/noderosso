@@ -8,9 +8,8 @@ import { URL } from 'url'
 import { axios, prettyAxiosErrors } from '../axios'
 import { summarice } from '../../summarice'
 import * as Hast from 'hast'
-import { Readability, Article } from '@mozilla/readability'
-import { JSDOM } from 'jsdom'
 import * as chrono from 'chrono-node'
+import puppeteer from 'puppeteer-core'
 
 export function Setup({ node }: { node: Node }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
@@ -33,7 +32,7 @@ export function Setup({ node }: { node: Node }) {
 
           const html = cleanString(await fetchPage(url))
           const hast = parseHtml(html)
-          const { content, contentAsText } = extractContent(html, url.toString())
+          const { content, contentAsText } = await extractContent(html, url.toString())
           const contentAsHast = parseHtml(content ?? '')
           const parsedTitle = extractTitle(hast)
 
@@ -412,16 +411,20 @@ function extractAllLinks(content: string): string[] {
   })
 }
 
-function extractContent(
+async function extractContent(
   content: string,
   url: string,
-): { content: string | undefined; contentAsText: string | undefined } {
-  const doc = new JSDOM(content, {
-    url,
-  })
-  const reader = new Readability(doc.window.document)
-  const article = reader.parse() as Article | null
-  return { content: article?.content, contentAsText: article?.textContent }
+): Promise<{ content: string | undefined; contentAsText: string | undefined }> {
+  const browser = await puppeteer.connect({browserWSEndpoint: 'ws://localhost:3000'});
+  const page = await browser.newPage();
+  await page.setContent(content);
+  await page.addScriptTag({path: require(process.env['BAZEL_NODE_RUNFILES_HELPER']!).resolve('npm/node_modules/@mozilla/readability/Readability.js')});
+  const res = await page.evaluate(`(() => {
+    const article = new Readability(document).parse()
+    return article? { content: article.content, contentAsText: article.textContent } : {content: undefined, contentAsText: undefined}
+  })()`) as { content: string | undefined; contentAsText: string | undefined }
+  browser.disconnect()
+  return res
 }
 
 function decodeHTMLEntities(text: string): string {
