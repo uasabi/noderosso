@@ -395,36 +395,29 @@ function extractSourceLink(content: string): string | undefined {
   return sourceLink
 }
 
-function extractAllLinks(content: string): string[] {
-  const REGEX = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gim
-  const matches = content.match(REGEX)
-  if (!matches) {
-    return []
-  }
-  return matches.filter((it) => {
-    try {
-      new URL(it)
-      return true
-    } catch (error) {
-      return false
-    }
-  })
-}
-
 async function extractContent(
   content: string,
   url: string,
 ): Promise<{ content: string | undefined; contentAsText: string | undefined }> {
-  const browser = await puppeteer.connect({browserWSEndpoint: 'ws://localhost:3000'});
-  const page = await browser.newPage();
-  await page.setContent(content);
-  await page.addScriptTag({path: require(process.env['BAZEL_NODE_RUNFILES_HELPER']!).resolve('npm/node_modules/@mozilla/readability/Readability.js')});
-  const res = await page.evaluate(`(() => {
-    const article = new Readability(document).parse()
-    return article? { content: article.content, contentAsText: article.textContent } : {content: undefined, contentAsText: undefined}
-  })()`) as { content: string | undefined; contentAsText: string | undefined }
-  browser.disconnect()
-  return res
+  const browser = await puppeteer.connect({ browserWSEndpoint: 'ws://localhost:3000' })
+  try {
+    const page = await browser.newPage()
+    await page.setContent(content)
+    await page.addScriptTag({
+      path: require(process.env['BAZEL_NODE_RUNFILES_HELPER']!).resolve(
+        'npm/node_modules/@mozilla/readability/Readability.js',
+      ),
+    })
+    const res = (await page.evaluate(`(() => {
+      const article = new Readability(document).parse()
+      return article? { content: article.content, contentAsText: article.textContent } : {content: undefined, contentAsText: undefined}
+    })()`)) as { content: string | undefined; contentAsText: string | undefined }
+    browser.disconnect()
+    return res
+  } catch (error) {
+    browser.disconnect()
+    throw error
+  }
 }
 
 function decodeHTMLEntities(text: string): string {

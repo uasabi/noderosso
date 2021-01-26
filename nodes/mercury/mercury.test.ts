@@ -20,7 +20,7 @@ test('setup', (assert) => {
   })
 })
 
-test('parse the original link', async (assert) => {
+test.skip('parse the original link', async (assert) => {
   const node = new MockNode() as any
   const input = Setup({ node })
 

@@ -9,9 +9,9 @@ const Schema = {
     topic: z.literal('FETCH.V1'),
     payload: z.object({
       url: z.string().url(),
-      title: z.union([z.string().nonempty(), z.undefined()]),
-      publishedDate: z.union([z.string().nonempty(), z.undefined()]),
-      content: z.union([z.string().nonempty(), z.undefined()]),
+      title: z.string().nonempty().optional(),
+      publishedDate: z.string().nonempty().optional(),
+      content: z.string().nonempty().optional(),
     }),
   }),
   readable: z.object({
