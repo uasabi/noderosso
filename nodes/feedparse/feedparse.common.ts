@@ -12,13 +12,19 @@ const Schema = {
   }),
   fetch: Message.extend({
     topic: z.literal('FETCH.V1'),
+    payload: z
+      .object({
+        after: z.string().optional(),
+        before: z.string().optional(),
+      })
+      .optional(),
   }),
   item: z.object({
     topic: z.literal('ITEM.V1'),
     payload: z.object({
       url: z.string().url(),
-      content: z.union([z.string(), z.undefined()]),
-      title: z.union([z.string(), z.undefined()]),
+      content: z.string().nonempty().optional(),
+      title: z.string().nonempty().optional(),
       publishedDate: z.string().nonempty(),
     }),
   }),

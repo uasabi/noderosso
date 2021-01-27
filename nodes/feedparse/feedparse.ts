@@ -12,7 +12,7 @@ module.exports = function (RED: Red) {
     const node = this
     const parsedUrl = url.parse(config.url)
     const context = asyncContext(node.context())
-    const ttl = isString(config.ttl) ? humanInterval(config.ttl.toLocaleLowerCase()) : undefined
+    const ttl = parseTTL(config.ttl)
 
     if (!(parsedUrl.host || (parsedUrl.hostname && parsedUrl.port))) {
       this.error('Invalid url')
@@ -42,4 +42,20 @@ function isString(value: unknown): value is string {
 
 function isNumber(value: unknown): value is number {
   return {}.toString.call(value) === '[object Number]' && !isNaN(value as number)
+}
+
+function parseTTL(ttl: unknown): number | undefined {
+  if (isString(ttl) && ttl.trim() === '0') {
+    return 0
+  }
+
+  if (isNumber(ttl) && ttl >= 0) {
+    return ttl
+  }
+
+  if (isString(ttl)) {
+    return humanInterval(ttl.toLocaleLowerCase())
+  }
+
+  return undefined
 }

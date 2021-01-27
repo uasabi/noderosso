@@ -20,5 +20,6 @@ node(
         "@npm//node-red",
         "@npm//rss-parser",
         "@npm//zod",
+        "@npm//chrono-node",
     ],
 )

@@ -5,6 +5,7 @@ import { Events, Event, Actions } from './feedparse.common'
 import { inspect } from 'util'
 import { URL } from 'url'
 import { axios, prettyAxiosErrors, AxiosResponse } from '../axios'
+import { parseDate } from 'chrono-node'
 
 export function Setup({ context, ttl, node, url }: { context: AsyncContext; ttl: number; node: Node; url: string }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
@@ -36,6 +37,9 @@ export function Setup({ context, ttl, node, url }: { context: AsyncContext; ttl:
         return done()
       }
       case 'FETCH.V1': {
+        const after = parseDate(action.payload?.after ?? '') as Date | null
+        const before = parseDate(action.payload?.before ?? '') as Date | null
+
         const startTime = process.hrtime()
         node.status({ fill: 'yellow', shape: 'dot', text: `Requesting ${url} ${time()}` })
 
@@ -75,20 +79,39 @@ export function Setup({ context, ttl, node, url }: { context: AsyncContext; ttl:
             return done()
           }
 
+          const items = feed.items
+            .filter((it) => {
+              return isValidUrl(it.origlink ?? it.link)
+            })
+            .map((it) => {
+              return {
+                guid: it.guid?.trim()?.length ?? 0 > 0 ? it.guid!.trim() : undefined,
+                url: (it.origlink ?? it.link) as string,
+                content: it.content?.trim()?.length ?? 0 > 0 ? it.content!.trim() : undefined,
+                title: it.title?.trim()?.length ?? 0 > 0 ? it.title!.trim() : undefined,
+                publishedDate: (parseDate(it.pubDate ?? '') ?? new Date()).toISOString(),
+              }
+            })
+            .filter((it) => {
+              return before ? before.valueOf() > new Date(it.publishedDate).valueOf() : true
+            })
+            .filter((it) => {
+              return after ? new Date(it.publishedDate).valueOf() > after.valueOf() : true
+            })
+
           let newItems = 0
-          for (const item of feed.items) {
-            const itemId = toId(item.guid ?? item.link!)
+          for (const item of items) {
+            const itemId = toId(item.guid ?? item.url)
             const previousArticle = await context.get(itemId)
             if (!previousArticle) {
               newItems = newItems + 1
-              await context.set(itemId, Date.now())
-              const url = item.origlink ?? item.link ?? ''
+              ttl > 0 ? await context.set(itemId, Date.now()) : null
               send(
                 Event.message({
-                  url: urlOrEmptyString(url),
+                  url: item.url,
                   content: item.content,
                   title: item.title,
-                  publishedDate: item.pubDate ?? new Date().toISOString(),
+                  publishedDate: item.publishedDate,
                 }),
               )
             }
@@ -127,10 +150,11 @@ function time() {
   return new Date().toISOString().substr(11, 5)
 }
 
-function urlOrEmptyString(value: string): string {
+function isValidUrl(url: unknown): url is string {
   try {
-    return new URL(value).toString()
+    new URL(url as any)
+    return true
   } catch {
-    return ''
+    return false
   }
 }
