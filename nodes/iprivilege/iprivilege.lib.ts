@@ -63,7 +63,12 @@ export function Setup({
 
           if (sessionId instanceof Error) {
             node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
-            node.error(`Error while creating a session:\n[${sessionId.name}]: ${sessionId.message}`)
+            node.error(
+              [
+                `Error while creating a session for ${booking.date} (${booking.id}).`,
+                `[${sessionId.name}]: ${sessionId.message}`,
+              ].join('\n'),
+            )
             send(Event.failedBooking({ date: booking.date }))
             continue
           }
@@ -72,7 +77,12 @@ export function Setup({
 
           if (isCancelled instanceof Error) {
             node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
-            node.error(`Error while cancelling a booking:\n[${isCancelled.name}]: ${isCancelled.message}`)
+            node.error(
+              [
+                `Error while cancelling a booking for ${booking.date} (${booking.id}).`,
+                `[${isCancelled.name}]: ${isCancelled.message}`,
+              ].join('\n'),
+            )
             continue
           }
 
@@ -110,7 +120,12 @@ export function Setup({
 
           if (sessionId instanceof Error) {
             node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
-            node.error(`Error while creating a session:\n[${sessionId.name}]: ${sessionId.message}`)
+            node.error(
+              [
+                `Error while the session for ${booking.date} (${booking.id}).`,
+                `[${sessionId.name}]: ${sessionId.message}`,
+              ].join('\n'),
+            )
             send(Event.failedBooking({ date: booking.date }))
             sessionId = null
             continue
@@ -126,7 +141,12 @@ export function Setup({
 
           if (bookingId instanceof Error) {
             node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
-            node.error(`Error while submitted the booking:\n[${bookingId.name}]: ${bookingId.message}`)
+            node.error(
+              [
+                `Error while submitting the booking for ${booking.date} (${booking.id}).`,
+                `[${bookingId.name}]: ${bookingId.message}`,
+              ].join('\n'),
+            )
             send(Event.failedBooking({ date: booking.date }))
             continue
           }
@@ -184,7 +204,10 @@ async function createSession({
   } catch (error) {
     return prettyAxiosErrors(error)({
       noResponse: () => new GenericError('No response'),
-      not200: () => new InvalidCredentials('Invalid credentials'),
+      not200: (response) =>
+        new InvalidCredentials(
+          `Invalid credentials. Received ${response.status} but I was expecting a 200. Response:\n${response.data}`,
+        ),
       orElse: () => new GenericError('Unknown error while connecting'),
     })
   }
@@ -256,43 +279,51 @@ async function bookCourt({
     return format(date, `HH:'00'`)
   }
 
+  const url = 'https://iprivilege.kfpam.com.sg/Home/NewFacilityBooking'
+  const payload = {
+    id: facilityId,
+    name: facilityName,
+    r: undefined,
+    ts: `${formatDate(startingDatetime)} - ${formatDate(add(startingDatetime, { hours: 1 }))},0.00,r`,
+    d: format(startingDatetime, `d/LLL/yyyy '00:00:00'`),
+    invoiceNo: format(nowInSgt(), `'395f754a'yyMMddhhmmss`), // 395f754a fixed, YYMMDDHHMMSS
+    refNo: undefined,
+    amount: '0.00',
+    paymentMethod: 'CA',
+    paymentMethod2: 'CA',
+    refNo2: undefined,
+    type: 'r',
+    q: 4,
+    qp: 0,
+    ti: 'w',
+    tip: 'd',
+    tit: 't',
+    ft: 'tc',
+    l: 1,
+    bookedfor: userId,
+    dp: '0.00',
+    tf: '0.00',
+    admf: '0.00',
+    IsCon: 'N',
+    ServiceCharges: undefined,
+  }
+
   let response: AxiosResponse
   try {
-    response = await axios.post<string | 1>(
-      'https://iprivilege.kfpam.com.sg/Home/NewFacilityBooking',
-      querystring.stringify({
-        id: facilityId,
-        name: facilityName,
-        r: undefined,
-        ts: `${formatDate(startingDatetime)} - ${formatDate(add(startingDatetime, { hours: 1 }))},0.00,r`,
-        d: format(startingDatetime, `d/LLL/yyyy '00:00:00'`),
-        invoiceNo: format(nowInSgt(), `'395f754a'yyMMddhhmmss`), // 395f754a fixed, YYMMDDHHMMSS
-        refNo: undefined,
-        amount: '0.00',
-        paymentMethod: 'CA',
-        paymentMethod2: 'CA',
-        refNo2: undefined,
-        type: 'r',
-        q: 4,
-        qp: 0,
-        ti: 'w',
-        tip: 'd',
-        tit: 't',
-        ft: 'tc',
-        l: 1,
-        bookedfor: userId,
-        dp: '0.00',
-        tf: '0.00',
-        admf: '0.00',
-        IsCon: 'N',
-        ServiceCharges: undefined,
-      }),
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: `ASP.NET_SessionId=${sessionId}` } },
-    )
+    response = await axios.post<string | 1>(url, querystring.stringify(payload), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: `ASP.NET_SessionId=${sessionId}` },
+    })
   } catch (error) {
     return prettyAxiosErrors(error)({
-      not200: () => new SessionExpired('Did not receive a successful response while booking'),
-      noResponse: () => new GenericError('no response'),
+      not200: (response) =>
+        new SessionExpired(
+          [
+            `I did not receive a successful response while booking. Expected 200, received ${response.status}.`,
+            `POST ${url} and sessionId ${sessionId}\n${JSON.stringify(payload)}`,
+            `Response: ${response.data}`,
+          ].join('\n'),
+        ),
+      noResponse: () => new GenericError('Timeout'),
       orElse: () => new GenericError('Unknown error while connecting'),
     })
   }
@@ -313,18 +344,26 @@ async function cancelBooking({
 }): Promise<boolean | SessionExpired | GenericError | InvalidBooking> {
   let response: AxiosResponse
 
+  const url = 'https://iprivilege.kfpam.com.sg/Home/CancelBooking'
+  const payload = {
+    id: bookingId,
+  }
+
   try {
-    response = await axios.post<0 | 1>(
-      'https://iprivilege.kfpam.com.sg/Home/CancelBooking',
-      querystring.stringify({
-        id: bookingId,
-      }),
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: `ASP.NET_SessionId=${sessionId}` } },
-    )
+    response = await axios.post<0 | 1>(url, querystring.stringify(payload), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Cookie: `ASP.NET_SessionId=${sessionId}` },
+    })
   } catch (error) {
     return prettyAxiosErrors(error)({
-      not200: () => new SessionExpired('Did not receive a successful response while booking'),
-      noResponse: () => new GenericError('no response'),
+      not200: (response) =>
+        new SessionExpired(
+          [
+            `I did not receive a successful response while cancelling a booking. Expected 200, received ${response.status}.`,
+            `POST ${url} and sessionId ${sessionId}\n${JSON.stringify(payload)}`,
+            `Response: ${response.data}`,
+          ].join('\n'),
+        ),
+      noResponse: () => new GenericError('Timed out'),
       orElse: () => new GenericError('Unknown error while connecting'),
     })
   }
