@@ -6,7 +6,7 @@ const Message = z.object({ _msgid: z.string() })
 const Schema = {
   fetch: Message.extend({
     topic: z.literal('FETCH.V1'),
-    payload: z.object({ subreddit: z.string().nonempty(), from: z.string().optional(), to: z.string().optional() }),
+    payload: z.object({ before: z.string().optional(), after: z.string().optional() }),
   }),
   postWithLink: z.object({
     topic: z.literal('POST_LINK.V1'),

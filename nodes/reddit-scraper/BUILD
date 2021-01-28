@@ -7,7 +7,6 @@ node(
     test_data = [
         "fixture.json",
         "fixture-article.json",
-        "fixture-listing.json",
         "fixture-self.json",
     ],
     test_deps = [
@@ -22,7 +21,9 @@ node(
         "//types",
         "@npm//@types/node",
         "@npm//chrono-node",
+        "@npm//date-fns",
         "@npm//node-red",
+        "@npm//querystring",
         "@npm//zod",
     ],
 )

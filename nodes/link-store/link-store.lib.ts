@@ -116,7 +116,10 @@ export function Setup({ node, context }: { node: Node; context: AsyncContext }) 
           if (!item) {
             continue
           }
-          if (Date.now() - new Date(item.createdAt).valueOf() > humanInterval(action.payload.since)!) {
+          if (
+            action.payload &&
+            Date.now() - new Date(item.createdAt).valueOf() > humanInterval(action.payload.since)!
+          ) {
             continue
           }
           items.push(item)

@@ -3,192 +3,103 @@ import { Actions, Events, Event } from './reddit-scraper.common'
 import { axios, prettyAxiosErrors, AxiosResponse } from '../axios'
 import * as chrono from 'chrono-node'
 import { URL } from 'url'
+import { differenceInHours } from 'date-fns'
+import { stringify } from 'querystring'
 
-const MAX_FETCHES = 40
-
-export function Setup({ node, baseUrl = 'https://www.reddit.com' }: { node: Node; baseUrl?: string }) {
+export function Setup({
+  node,
+  subreddit,
+  redditBaseUrl = 'https://www.reddit.com',
+  pushshiftBaseUrl = 'https://api.pushshift.io',
+}: {
+  node: Node
+  redditBaseUrl?: string
+  subreddit: string
+  pushshiftBaseUrl?: string
+}) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
     switch (action.topic) {
       case 'FETCH.V1': {
-        const from: Date | null = chrono.parseDate(action.payload.from ?? '')
-        const to: Date = chrono.parseDate(action.payload.to ?? '') ?? new Date()
-        const subredditUrl = parseSubredditUrl(action.payload.subreddit, baseUrl)
+        const after = chrono.parseDate(action.payload.after ?? '') as Date | null
+        const before = chrono.parseDate(action.payload.before ?? '') as Date | null
 
-        node.log(`Fetching ${subredditUrl} ${from ? `from ${from}` : '1 page'} until ${to.toISOString()}`)
+        const args = stringify({
+          subreddit,
+          size: 500,
+          ...(after ? { after: `${Math.ceil(differenceInHours(new Date(), after) / 24)}d` } : {}),
+          ...(before ? { before: `${Math.ceil(differenceInHours(new Date(), before) / 24)}d` } : {}),
+          fields: ['permalink'].join(','),
+        })
 
-        if (!from) {
-          let response: AxiosResponse<RedditNestable<RedditResponse>>
-          let counter = 0
-          try {
-            response = await axios.get<RedditNestable<RedditResponse>>(subredditUrl)
-          } catch (error) {
-            prettyAxiosErrors(error)({
-              not200: (response) => `Received ${response.status} response (expecting 200) for ${subredditUrl}`,
-              noResponse: () => `Timeout while fetching ${subredditUrl}`,
-              orElse: () => `Generic error while fetching ${subredditUrl}`,
-            })
-            return done()
-          }
-          for (const post of response.data.data.children) {
-            const postedAt = post.data.created_utc * 1000
-            const isTooRecent = postedAt > to.valueOf()
+        const pushshiftUrl = `${pushshiftBaseUrl}/reddit/search/submission/?${args}`
+        let response: AxiosResponse<PushShiftResponse>
 
-            if (isString(post.data.permalink) && !isTooRecent) {
-              const url = `${baseUrl}${post.data.permalink}`
-              const fullPost = await fetchPost(url)
-
-              if (fullPost instanceof Error) {
-                node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
-                node.error(`Error while fetching the post ${url}:\n[${fullPost.name}]: ${fullPost.message}`)
-                continue
-              }
-
-              counter++
-
-              switch (fullPost.type) {
-                case 'link':
-                  send(
-                    Event.postWithLink({
-                      link: fullPost.link,
-                      score: fullPost.score,
-                      replies: fullPost.replies,
-                      permalink: fullPost.permalink,
-                      createdAt: fullPost.createdAt,
-                    }),
-                  )
-                  break
-                case 'self':
-                  send(
-                    Event.postSelf({
-                      text: fullPost.text,
-                      score: fullPost.score,
-                      replies: fullPost.replies,
-                      permalink: fullPost.permalink,
-                      createdAt: fullPost.createdAt,
-                    }),
-                  )
-                  break
-                default:
-                  break
-              }
-            }
-          }
-          node.status({ fill: 'green', shape: 'dot', text: `Extracted ${counter} posts ${time()}` })
+        try {
+          node.log(`Fetching ${pushshiftUrl}`)
+          response = await axios.get<PushShiftResponse>(pushshiftUrl)
+        } catch (error) {
+          const message = prettyAxiosErrors(error)({
+            not200: (response) => `Received ${response.status} response (expecting 200) for ${pushshiftUrl}`,
+            noResponse: () => `Timeout while fetching ${pushshiftUrl}`,
+            orElse: () => `Generic error while fetching ${pushshiftUrl}`,
+          })
+          node.error(message)
           return done()
         }
 
-        let isComplete = false
-        let i = 0
         let counter = 0
-        let nextId: string | null = null
-        for (; i < MAX_FETCHES; i++) {
-          if (isComplete) {
-            break
-          }
-          const url = `${subredditUrl}${nextId ? `?after=${nextId}` : ''}`
 
-          let response: AxiosResponse<RedditNestable<RedditResponse>>
-          try {
-            response = await axios.get<RedditNestable<RedditResponse>>(url)
-          } catch (error) {
-            prettyAxiosErrors(error)({
-              not200: (response) => `Received ${response.status} response (expecting 200) for ${url}`,
-              noResponse: () => `Timeout while fetching ${url}`,
-              orElse: () => `Generic error while fetching ${url}`,
-            })
+        for (const post of response.data.data) {
+          if (!isString(post.permalink)) {
             continue
           }
 
-          const after = response.data.data.after ?? null
-          const posts = response.data.data.children.sort((a, b) => {
-            return b.data.created_utc - a.data.created_utc
-          })
-          for (const post of posts) {
-            const postedAt = post.data.created_utc * 1000
-            const isTooRecent = postedAt > to.valueOf()
-            const isTooOld = from.valueOf() > postedAt
+          const url = `${redditBaseUrl}${post.permalink}`
+          const fullPost = await fetchPost(url)
 
-            if (isString(post.data.permalink) && !isTooRecent && !isTooOld) {
-              const url = `${baseUrl}${post.data.permalink}`
-              const fullPost = await fetchPost(url)
-
-              if (fullPost instanceof Error) {
-                node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
-                node.error(`Error while fetching the post ${url}:\n[${fullPost.name}]: ${fullPost.message}`)
-                continue
-              }
-
-              counter++
-
-              switch (fullPost.type) {
-                case 'link':
-                  send(
-                    Event.postWithLink({
-                      link: fullPost.link,
-                      score: fullPost.score,
-                      replies: fullPost.replies,
-                      permalink: fullPost.permalink,
-                      createdAt: fullPost.createdAt,
-                    }),
-                  )
-                  break
-                case 'self':
-                  send(
-                    Event.postSelf({
-                      text: fullPost.text,
-                      score: fullPost.score,
-                      replies: fullPost.replies,
-                      permalink: fullPost.permalink,
-                      createdAt: fullPost.createdAt,
-                    }),
-                  )
-                  break
-                default:
-                  break
-              }
-            }
-
-            if (post.data.stickied !== true && isTooOld) {
-              isComplete = true
-            }
+          if (fullPost instanceof Error) {
+            node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
+            node.error(`Error while fetching the post ${url}:\n[${fullPost.name}]: ${fullPost.message}`)
+            continue
           }
-          nextId = after as any
+
+          counter++
+
+          switch (fullPost.type) {
+            case 'link':
+              send(
+                Event.postWithLink({
+                  link: fullPost.link,
+                  score: fullPost.score,
+                  replies: fullPost.replies,
+                  permalink: fullPost.permalink,
+                  createdAt: fullPost.createdAt,
+                }),
+              )
+              break
+            case 'self':
+              send(
+                Event.postSelf({
+                  text: fullPost.text,
+                  score: fullPost.score,
+                  replies: fullPost.replies,
+                  permalink: fullPost.permalink,
+                  createdAt: fullPost.createdAt,
+                }),
+              )
+              break
+            default:
+              break
+          }
         }
 
-        if (i === 10 && !isComplete) {
-          node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}. Reached max fetches, still not enough` })
-        } else {
-          node.status({ fill: 'green', shape: 'dot', text: `Extracted ${counter} posts ${time()}` })
-        }
-
+        node.status({ fill: 'green', shape: 'dot', text: `Extracted ${counter} posts ${time()}` })
         return done()
       }
       default:
         // assertUnreachable(action)
         break
     }
-  }
-}
-
-function parseSubredditUrl(name: string, baseUrl: string): string {
-  const nameWithStart = parseStart(name)
-
-  return `${nameWithStart.endsWith('/') ? nameWithStart : `${nameWithStart}/`}.json`
-
-  function parseStart(name: string): string {
-    if (name.startsWith(baseUrl)) {
-      return name
-    }
-    if (name.startsWith('/r/')) {
-      return `${baseUrl}${name}`
-    }
-    if (name.startsWith('r/')) {
-      return `${baseUrl}/${name}`
-    }
-    if (name.startsWith('/')) {
-      return `${baseUrl}/r${name}`
-    }
-    return `${baseUrl}/r/${name}`
   }
 }
 
@@ -227,10 +138,11 @@ export interface RedditResponse {
   score: number
 }
 
-async function fetchPost(url: string): Promise<FetchingError | RedditLinkPost | RedditSelfPost> {
+export async function fetchPost(url: string): Promise<FetchingError | RedditLinkPost | RedditSelfPost> {
   let response: AxiosResponse<RedditNestable<RedditResponse>[]>
   try {
-    response = await axios.get<RedditNestable<RedditResponse>[]>(`${url}.json`)
+    const escapedUrl = new URL(url).toString()
+    response = await axios.get<RedditNestable<RedditResponse>[]>(`${escapedUrl}.json`)
   } catch (error) {
     return prettyAxiosErrors(error)({
       not200: (response) => new FetchingError(`Received ${response.status} response (expecting 200) for ${url}`),
@@ -339,10 +251,6 @@ function isValidUrl(url: unknown): url is string {
   }
 }
 
-function isNumber(value: unknown): value is number {
-  return {}.toString.call(value) === '[object Number]' && !isNaN(value as number)
-}
-
 class FetchingError extends Error {
   constructor(message: string) {
     super(message)
@@ -377,4 +285,10 @@ interface RedditReply {
 
 function isValidDate(date: unknown): date is Date {
   return date instanceof Date && !isNaN(date.valueOf())
+}
+
+interface PushShiftResponse {
+  data: {
+    permalink: string
+  }[]
 }

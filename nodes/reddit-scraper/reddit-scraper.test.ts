@@ -1,7 +1,7 @@
 import test from 'tape'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { RedditNestable, RedditResponse, extractReplies, Setup } from './reddit-scraper.lib'
+import { RedditNestable, RedditResponse, extractReplies, fetchPost } from './reddit-scraper.lib'
 import { Server, createServer } from 'http'
 
 const fixtureReplies = JSON.parse(readFileSync(join(__dirname, 'fixture.json'), 'utf-8')) as RedditNestable<
@@ -9,7 +9,6 @@ const fixtureReplies = JSON.parse(readFileSync(join(__dirname, 'fixture.json'), 
 >[]
 const fixtureArticle = readFileSync(join(__dirname, 'fixture-article.json'), 'utf-8')
 const fixtureSelf = readFileSync(join(__dirname, 'fixture-self.json'), 'utf-8')
-const fixtureListing = readFileSync(join(__dirname, 'fixture-listing.json'), 'utf-8')
 
 let server: Server
 const port = 54321
@@ -19,19 +18,11 @@ test('setup', (assert) => {
     res.statusCode = 200
     res.setHeader('Content-Type', 'application/json')
 
-    if (req.url?.includes('first')) {
-      return res.end(`${fixtureListing}`)
-    }
-
-    if (req.url?.includes('second')) {
+    if (req.url?.includes('article')) {
       return res.end(`${fixtureArticle}`)
     }
 
-    if (req.url?.includes('third')) {
-      return res.end(`${fixtureListing}`.replace('/r/second', '/r/fourth'))
-    }
-
-    if (req.url?.includes('fourth')) {
+    if (req.url?.includes('self')) {
       return res.end(`${fixtureSelf}`)
     }
 
@@ -455,89 +446,69 @@ test('extract replies', (assert) => {
 })
 
 test('Single article', async (assert) => {
-  const input = Setup({
-    node: { status: () => {}, error: () => {}, log: () => {} } as any,
-    baseUrl: `http://localhost:${port}`,
+  const post = await fetchPost(`http://localhost:${port}/article`)
+  assert.deepEqual(post, {
+    type: 'link',
+    link: 'https://www.openfaas.com/blog/kubernetes-webhooks-made-easy-with-openfaas/',
+    score: 1,
+    replies: [
+      {
+        text:
+          '<div class="md"><p>> In this post you’ll learn how to write Kubernetes Admission webhooks using OpenFaaS functions.</p>\n\n<p>This is a guest post from a community member, and makes the setup easier than usual to start reacting to events and webhooks from K8s.</p>\n</div>',
+        replies: [],
+        score: 2,
+        createdAt: '2021-01-23T12:17:01.000Z',
+      },
+    ],
+    permalink: 'http://localhost:54321/article',
+    createdAt: '2021-01-23T12:16:10.000Z',
   })
-  await input(
-    { topic: 'FETCH.V1', payload: { subreddit: 'first' }, _msgid: '1' },
-    (event) =>
-      assert.deepEqual(event, {
-        topic: 'POST_LINK.V1',
-        payload: {
-          link: 'https://www.openfaas.com/blog/kubernetes-webhooks-made-easy-with-openfaas/',
-          score: 1,
-          replies: [
-            {
-              text:
-                '<div class="md"><p>> In this post you’ll learn how to write Kubernetes Admission webhooks using OpenFaaS functions.</p>\n\n<p>This is a guest post from a community member, and makes the setup easier than usual to start reacting to events and webhooks from K8s.</p>\n</div>',
-              replies: [],
-              score: 2,
-              createdAt: '2021-01-23T12:17:01.000Z',
-            },
-          ],
-          permalink: 'http://localhost:54321/r/second',
-          createdAt: '2021-01-23T12:16:10.000Z',
-        },
-      }),
-    () => assert.pass(),
-  )
   assert.end()
 })
 
 test('Self text', async (assert) => {
-  const input = Setup({
-    node: { status: () => {}, error: () => {}, log: () => {} } as any,
-    baseUrl: `http://localhost:${port}`,
+  const post = await fetchPost(`http://localhost:${port}/self`)
+  assert.deepEqual(post, {
+    type: 'self',
+    text:
+      '<!-- SC_OFF --><div class="md"><p>New release of my Kubeswitch tool. Now supports for multiple Kubernetes config files.</p>\n\n<p><a href="https://github.com/trankchung/kubeswitch/releases/tag/v0.2.0">https://github.com/trankchung/kubeswitch/releases/tag/v0.2.0</a></p>\n</div><!-- SC_ON -->',
+    score: 10,
+    replies: [
+      {
+        text:
+          '<div class="md"><p>What is the big difference to kubie?\nHaven\'t tried kubeswitch yet and only use kubie occasionally.</p>\n</div>',
+        replies: [
+          {
+            text:
+              '<div class="md"><p>I used to use kubie but kubie only supports one session so no matter which terminal you’re in you’re always interacting with same k8s cluster. I use tmux and I have many windows and with kubeswitch I can have each window interacting with different k8s cluster.</p>\n</div>',
+            replies: [
+              {
+                text:
+                  '<div class="md"><p>This is what I use kubie for, having independent connections to different clusters and namespaces in my different terminator windows (I use terminator instead of tmux, since I\'m too dumb to use tmux properly ;) )</p>\n</div>',
+                replies: [
+                  {
+                    text:
+                      '<div class="md"><p>I just look at kubie again and looks like it supports multiple sessions now. It didn’t in the past. Use kubie if you’d like ;)</p>\n</div>',
+                    replies: [],
+                    score: 2,
+                    createdAt: '2021-01-24T15:08:43.000Z',
+                  },
+                ],
+                score: 1,
+                createdAt: '2021-01-24T11:22:46.000Z',
+              },
+            ],
+            score: 1,
+            createdAt: '2021-01-23T23:38:55.000Z',
+          },
+        ],
+        score: 2,
+        createdAt: '2021-01-23T23:36:05.000Z',
+      },
+    ],
+    permalink: 'http://localhost:54321/self',
+    createdAt: '2021-01-23T20:13:08.000Z',
   })
-  await input(
-    { topic: 'FETCH.V1', payload: { subreddit: 'third' }, _msgid: '1' },
-    (event) =>
-      assert.deepEqual(event, {
-        topic: 'POST_SELF.V1',
-        payload: {
-          text:
-            '<!-- SC_OFF --><div class="md"><p>New release of my Kubeswitch tool. Now supports for multiple Kubernetes config files.</p>\n\n<p><a href="https://github.com/trankchung/kubeswitch/releases/tag/v0.2.0">https://github.com/trankchung/kubeswitch/releases/tag/v0.2.0</a></p>\n</div><!-- SC_ON -->',
-          score: 10,
-          replies: [
-            {
-              text:
-                '<div class="md"><p>What is the big difference to kubie?\nHaven\'t tried kubeswitch yet and only use kubie occasionally.</p>\n</div>',
-              replies: [
-                {
-                  text:
-                    '<div class="md"><p>I used to use kubie but kubie only supports one session so no matter which terminal you’re in you’re always interacting with same k8s cluster. I use tmux and I have many windows and with kubeswitch I can have each window interacting with different k8s cluster.</p>\n</div>',
-                  replies: [
-                    {
-                      text:
-                        '<div class="md"><p>This is what I use kubie for, having independent connections to different clusters and namespaces in my different terminator windows (I use terminator instead of tmux, since I\'m too dumb to use tmux properly ;) )</p>\n</div>',
-                      replies: [
-                        {
-                          text:
-                            '<div class="md"><p>I just look at kubie again and looks like it supports multiple sessions now. It didn’t in the past. Use kubie if you’d like ;)</p>\n</div>',
-                          replies: [],
-                          score: 2,
-                          createdAt: '2021-01-24T15:08:43.000Z',
-                        },
-                      ],
-                      score: 1,
-                      createdAt: '2021-01-24T11:22:46.000Z',
-                    },
-                  ],
-                  score: 1,
-                  createdAt: '2021-01-23T23:38:55.000Z',
-                },
-              ],
-              score: 2,
-              createdAt: '2021-01-23T23:36:05.000Z',
-            },
-          ],
-          permalink: 'http://localhost:54321/r/fourth',
-          createdAt: '2021-01-23T20:13:08.000Z',
-        },
-      }),
-    () => assert.pass(),
-  )
   assert.end()
 })
 

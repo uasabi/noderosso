@@ -37,9 +37,11 @@ const Schema = {
   }),
   digest: Message.extend({
     topic: z.literal('DIGEST.V1'),
-    payload: z.object({
-      since: z.string().nonempty(),
-    }),
+    payload: z
+      .object({
+        since: z.string().nonempty(),
+      })
+      .optional(),
   }),
   report: z.object({
     topic: z.literal('REPORT.V1'),

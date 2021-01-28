@@ -4,6 +4,7 @@
     color: '#a6bbcf',
     defaults: {
       name: { value: '' },
+      subreddit: { value: '' },
     },
     inputs: 1,
     outputs: 1,
@@ -19,8 +20,12 @@
       <label for="node-input-name"><i class="icon-tag"></i> Name</label>
       <input type="text" id="node-input-name" placeholder="Name">
   </div>
+  <div class="form-row">
+    <label for="node-input-subreddit"><i class="icon-tag"></i> Subreddit</label>
+    <input type="text" id="node-input-subreddit">
+  </div>
 </script>
 
 <script type="text/html" data-help-name="redditscraper">
-  <p>Scrapes a Subreddit for links</p>
+  <p>Scrapes a Subreddit for posts</p>
 </script>
