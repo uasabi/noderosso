@@ -25,6 +25,12 @@ type GenericLink = {
   createdAt: string
 }
 
+const SKIP_LINKS = [
+  (link: string) => link.toLowerCase().includes('np.reddit.com/message/compose'),
+  (link: string) => link.toLowerCase().includes('np.reddit.com/r/RemindMeBo'),
+  (link: string) => link.toLowerCase().includes('np.reddit.com/u/LinkifyBot'),
+]
+
 export type Item = RedditLink | GenericLink
 
 export function Setup({ node, context }: { node: Node; context: AsyncContext }) {
@@ -65,9 +71,7 @@ export function Setup({ node, context }: { node: Node; context: AsyncContext }) 
 
         const unshortenedLinks = await unshortenUrls(links)
 
-        for (const link of (await unshortenedLinks)
-          .filter((it) => !it.includes('np.reddit.com/message/compose'))
-          .filter((it) => !it.includes('np.reddit.com/r/RemindMeBot'))) {
+        for (const link of unshortenedLinks.filter((it) => !SKIP_LINKS.some((test) => test(it)))) {
           const id = generateId()
           await context.set<RedditLink>(id, {
             id,
@@ -93,9 +97,7 @@ export function Setup({ node, context }: { node: Node; context: AsyncContext }) 
 
         const unshortenedLinks = await unshortenUrls(links)
 
-        for (const link of unshortenedLinks
-          .filter((it) => !it.includes('np.reddit.com/message/compose'))
-          .filter((it) => !it.includes('np.reddit.com/r/RemindMeBot'))) {
+        for (const link of unshortenedLinks.filter((it) => !SKIP_LINKS.some((test) => test(it)))) {
           const id = generateId()
           await context.set<RedditLink>(id, {
             id,
@@ -222,4 +224,20 @@ async function unwrap(url: string): Promise<string> {
   } catch {}
 
   return url
+}
+
+export function filterQuerystring(url: string): string {
+  const SKIP_ARGS = ['utm_source', 'amp;utm_source', 'source']
+
+  try {
+    const parsedUrl = new URL(url)
+    SKIP_ARGS.forEach((it) => {
+      if (parsedUrl.searchParams.has(it)) {
+        parsedUrl.searchParams.delete(it)
+      }
+    })
+    return parsedUrl.toString()
+  } catch {
+    return url
+  }
 }

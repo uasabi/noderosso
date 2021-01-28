@@ -78,7 +78,7 @@ container_push(
     image = ":server",
     registry = "learnk8sregistry.azurecr.io",
     repository = "noderosso",
-    tag = "2021.01.022",
+    tag = "2021.01.023",
 )
 
 test_suite(

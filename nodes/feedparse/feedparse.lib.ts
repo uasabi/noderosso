@@ -1,5 +1,5 @@
 import { Node } from 'node-red'
-import Parser from 'rss-parser'
+import Parser, { Item } from 'rss-parser'
 import { AsyncContext } from '../context'
 import { Events, Event, Actions } from './feedparse.common'
 import { inspect } from 'util'
@@ -87,7 +87,7 @@ export function Setup({ context, ttl, node, url }: { context: AsyncContext; ttl:
               return {
                 guid: it.guid?.trim()?.length ?? 0 > 0 ? it.guid!.trim() : undefined,
                 url: (it.origlink ?? it.link) as string,
-                content: it.content?.trim()?.length ?? 0 > 0 ? it.content!.trim() : undefined,
+                content: parseContent(it),
                 title: it.title?.trim()?.length ?? 0 > 0 ? it.title!.trim() : undefined,
                 publishedDate: (parseDate(it.pubDate ?? '') ?? new Date()).toISOString(),
               }
@@ -157,4 +157,28 @@ function isValidUrl(url: unknown): url is string {
   } catch {
     return false
   }
+}
+
+function parseContent(item: Item): string | undefined {
+  if (
+    hasOwnProperty(item, 'content:encoded') &&
+    isString(item['content:encoded']) &&
+    item['content:encoded'].trim().length > 0
+  ) {
+    return item['content:encoded']
+  }
+
+  if (hasOwnProperty(item, 'content') && isString(item['content']) && item['content'].trim().length > 0) {
+    return item.content
+  }
+
+  return undefined
+}
+
+function hasOwnProperty<X extends {}, Y extends PropertyKey>(obj: X, prop: Y): obj is X & Record<Y, unknown> {
+  return obj.hasOwnProperty(prop)
+}
+
+function isString(value: unknown): value is string {
+  return {}.toString.call(value) === '[object String]'
 }
