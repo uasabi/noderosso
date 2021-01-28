@@ -11,45 +11,64 @@ export function Setup({
   subreddit,
   redditBaseUrl = 'https://www.reddit.com',
   pushshiftBaseUrl = 'https://api.pushshift.io',
+  maxDaysPerPage,
 }: {
   node: Node
   redditBaseUrl?: string
   subreddit: string
   pushshiftBaseUrl?: string
+  maxDaysPerPage: number
 }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
     switch (action.topic) {
       case 'FETCH.V1': {
+        const before = (chrono.parseDate(action.payload.before ?? '') as Date | null) ?? new Date()
+        const beforeInDays = Math.floor(Math.floor(differenceInHours(new Date(), before) / 24))
+
         const after = chrono.parseDate(action.payload.after ?? '') as Date | null
-        const before = chrono.parseDate(action.payload.before ?? '') as Date | null
+        const afterInDays = after ? Math.ceil(differenceInHours(new Date(), after) / 24) : beforeInDays + maxDaysPerPage
 
-        const args = stringify({
-          subreddit,
-          size: 500,
-          ...(after ? { after: `${Math.ceil(differenceInHours(new Date(), after) / 24)}d` } : {}),
-          ...(before ? { before: `${Math.ceil(differenceInHours(new Date(), before) / 24)}d` } : {}),
-          fields: ['permalink'].join(','),
-        })
+        const posts = [] as { permalink: string; created_utc: number }[]
 
-        const pushshiftUrl = `${pushshiftBaseUrl}/reddit/search/submission/?${args}`
-        let response: AxiosResponse<PushShiftResponse>
-
-        try {
-          node.log(`Fetching ${pushshiftUrl}`)
-          response = await axios.get<PushShiftResponse>(pushshiftUrl)
-        } catch (error) {
-          const message = prettyAxiosErrors(error)({
-            not200: (response) => `Received ${response.status} response (expecting 200) for ${pushshiftUrl}`,
-            noResponse: () => `Timeout while fetching ${pushshiftUrl}`,
-            orElse: () => `Generic error while fetching ${pushshiftUrl}`,
+        for (let page = beforeInDays; page <= afterInDays; page += maxDaysPerPage) {
+          const args = stringify({
+            subreddit,
+            size: 500,
+            before: `${page}d`,
+            after: `${page + maxDaysPerPage}d`,
           })
-          node.error(message)
-          return done()
+
+          const pushshiftUrl = `${pushshiftBaseUrl}/reddit/search/submission/?${args}&fields=${[
+            'permalink',
+            'created_utc',
+          ].join(',')}`
+          let response: AxiosResponse<PushShiftResponse>
+
+          try {
+            node.log(`Fetching ${pushshiftUrl}`)
+            response = await axios.get<PushShiftResponse>(pushshiftUrl)
+          } catch (error) {
+            const message = prettyAxiosErrors(error)({
+              not200: (response) => `Received ${response.status} response (expecting 200) for ${pushshiftUrl}`,
+              noResponse: () => `Timeout while fetching ${pushshiftUrl}`,
+              orElse: () => `Generic error while fetching ${pushshiftUrl}`,
+            })
+            node.error(message)
+            continue
+          }
+
+          node.log(`Found ${response.data.data.length} entries`)
+          response.data.data.forEach((it) => posts.push(it))
         }
 
         let counter = 0
 
-        for (const post of response.data.data) {
+        const relevantPosts = posts.filter((it) => {
+          const date = it.created_utc * 1000
+          return date < before.valueOf() && date > (after?.valueOf() ?? 0)
+        })
+
+        for (const post of relevantPosts) {
           if (!isString(post.permalink)) {
             continue
           }
@@ -290,5 +309,6 @@ function isValidDate(date: unknown): date is Date {
 interface PushShiftResponse {
   data: {
     permalink: string
+    created_utc: number
   }[]
 }
