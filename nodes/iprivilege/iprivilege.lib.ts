@@ -285,7 +285,7 @@ async function bookCourt({
     name: facilityName,
     r: undefined,
     ts: `${formatDate(startingDatetime)} - ${formatDate(add(startingDatetime, { hours: 1 }))},0.00,r`,
-    d: format(startingDatetime, `d/LLL/yyyy '00:00:00'`),
+    d: format(startingDatetime, `dd/LLL/yyyy '00:00:00'`),
     invoiceNo: format(nowInSgt(), `'395f754a'yyMMddhhmmss`), // 395f754a fixed, YYMMDDHHMMSS
     refNo: undefined,
     amount: '0.00',
@@ -319,7 +319,7 @@ async function bookCourt({
         new SessionExpired(
           [
             `I did not receive a successful response while booking. Expected 200, received ${response.status}.`,
-            `POST ${url} and sessionId ${sessionId}\n${JSON.stringify(payload)}`,
+            `POST ${url} and sessionId ${sessionId}\n${querystring.stringify(payload)}`,
             `Response: ${response.data}`,
           ].join('\n'),
         ),
@@ -359,7 +359,7 @@ async function cancelBooking({
         new SessionExpired(
           [
             `I did not receive a successful response while cancelling a booking. Expected 200, received ${response.status}.`,
-            `POST ${url} and sessionId ${sessionId}\n${JSON.stringify(payload)}`,
+            `POST ${url} and sessionId ${sessionId}\n${querystring.stringify(payload)}`,
             `Response: ${response.data}`,
           ].join('\n'),
         ),

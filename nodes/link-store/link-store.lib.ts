@@ -26,10 +26,14 @@ type GenericLink = {
 }
 
 const SKIP_LINKS = [
-  (link: string) => link.toLowerCase().includes('np.reddit.com/message/compose'),
-  (link: string) => link.toLowerCase().includes('np.reddit.com/r/RemindMeBo'),
-  (link: string) => link.toLowerCase().includes('np.reddit.com/u/LinkifyBot'),
+  (link: string) => /np\.reddit\.com\/message\/compose/i.test(link),
+  (link: string) => /np\.reddit\.com\/r\/RemindMeBot/i.test(link),
+  (link: string) => /np\.reddit\.com\/u\/LinkifyBot/i.test(link),
 ]
+
+export function filterUnwantedLinks(url: string): boolean {
+  return !SKIP_LINKS.some((fn) => fn(url))
+}
 
 export type Item = RedditLink | GenericLink
 
@@ -71,7 +75,7 @@ export function Setup({ node, context }: { node: Node; context: AsyncContext }) 
 
         const unshortenedLinks = await unshortenUrls(links)
 
-        for (const link of unshortenedLinks.filter((it) => !SKIP_LINKS.some((test) => test(it)))) {
+        for (const link of unshortenedLinks.filter(filterUnwantedLinks)) {
           const id = generateId()
           await context.set<RedditLink>(id, {
             id,
@@ -97,7 +101,7 @@ export function Setup({ node, context }: { node: Node; context: AsyncContext }) 
 
         const unshortenedLinks = await unshortenUrls(links)
 
-        for (const link of unshortenedLinks.filter((it) => !SKIP_LINKS.some((test) => test(it)))) {
+        for (const link of unshortenedLinks.filter(filterUnwantedLinks)) {
           const id = generateId()
           await context.set<RedditLink>(id, {
             id,
