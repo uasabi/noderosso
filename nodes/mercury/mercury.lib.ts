@@ -9,7 +9,10 @@ import { axios, prettyAxiosErrors } from '../axios'
 import { summarice } from '../../summarice'
 import * as Hast from 'hast'
 import * as chrono from 'chrono-node'
-import puppeteer from 'puppeteer-core'
+import puppeteer from 'puppeteer-extra'
+import StealthPlugin from 'puppeteer-extra-plugin-stealth'
+
+puppeteer.use(StealthPlugin())
 
 export function Setup({ node }: { node: Node }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
