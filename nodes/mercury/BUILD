@@ -11,13 +11,14 @@ node(
         "//types",
         "@npm//@mozilla/readability",
         "@npm//@types/node",
-        "@npm//@types/puppeteer-core",
         "@npm//chrono-node",
         "@npm//hast-util-raw",
         "@npm//hast-util-select",
         "@npm//node-red",
         "@npm//zod",
-        "@npm//puppeteer-core"
+        "@npm//puppeteer-core",
+        "@npm//puppeteer-extra",
+        "@npm//puppeteer-extra-plugin-stealth"
     ],
     test_deps = [
         "//types",
