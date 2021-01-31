@@ -15,7 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "@mozilla/readability": "^0.3.0",
-    "axios": "^0.20.0",
+    "axios": "^0.21.1",
     "chrono-node": "^2.1.9",
     "date-fns": "^2.16.1",
     "emailjs-imap-client": "^3.1.0",
