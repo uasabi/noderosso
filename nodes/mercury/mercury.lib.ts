@@ -14,6 +14,14 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 
 puppeteer.use(StealthPlugin())
 
+let readabilityPath: string | null = null
+
+if (process.env['BAZEL_NODE_RUNFILES_HELPER']) {
+  readabilityPath = require(process.env['BAZEL_NODE_RUNFILES_HELPER']).resolve(
+    'npm/node_modules/@mozilla/readability/Readability.js',
+  )
+}
+
 export function Setup({ node }: { node: Node }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
     switch (action.topic) {
@@ -26,7 +34,7 @@ export function Setup({ node }: { node: Node }) {
 
           const html = cleanString(await fetchPage(url))
           const hast = parseHtml(html)
-          const { content, contentAsText } = await extractContent(html, url.toString())
+          const { content, contentAsText } = await extractContent(url.toString())
           const contentAsHast = parseHtml(content ?? '')
           const parsedTitle = extractTitle(hast)
 
@@ -330,21 +338,22 @@ function extractSourceLink(content: string): string | undefined {
 }
 
 async function extractContent(
-  content: string,
   url: string,
 ): Promise<{ content: string | undefined; contentAsText: string | undefined }> {
+  if (!readabilityPath) {
+    return { content: undefined, contentAsText: undefined }
+  }
+
   const browser = await puppeteer.connect({ browserWSEndpoint: 'ws://localhost:3000' })
   try {
     const page = await browser.newPage()
-    await page.setContent(content)
+    await page.goto(url, { waitUntil: 'networkidle0' })
     await page.addScriptTag({
-      path: require(process.env['BAZEL_NODE_RUNFILES_HELPER']!).resolve(
-        'npm/node_modules/@mozilla/readability/Readability.js',
-      ),
+      path: readabilityPath,
     })
     const res = (await page.evaluate(`(() => {
       const article = new Readability(document).parse()
-      return article? { content: article.content, contentAsText: article.textContent } : {content: undefined, contentAsText: undefined}
+      return article ? { content: article.content, contentAsText: article.textContent } : {content: undefined, contentAsText: undefined}
     })()`)) as { content: string | undefined; contentAsText: string | undefined }
     browser.disconnect()
     return res
@@ -352,25 +361,4 @@ async function extractContent(
     browser.disconnect()
     throw error
   }
-}
-
-function decodeHTMLEntities(text: string): string {
-  return [
-    ['amp', '&'],
-    ['apos', "'"],
-    ['#x27', "'"],
-    ['#x2F', '/'],
-    ['#39', "'"],
-    ['#47', '/'],
-    ['lt', '<'],
-    ['gt', '>'],
-    ['nbsp', ' '],
-    ['quot', '"'],
-  ].reduce((acc, [entity, char]) => {
-    if (!entity || !char) {
-      return acc
-    }
-
-    return acc.replace(new RegExp(`&${entity};`, 'g'), char)
-  }, text)
 }
