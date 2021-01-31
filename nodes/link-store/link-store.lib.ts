@@ -29,6 +29,9 @@ const SKIP_LINKS = [
   (link: string) => /np\.reddit\.com\/message\/compose/i.test(link),
   (link: string) => /np\.reddit\.com\/r\/RemindMeBot/i.test(link),
   (link: string) => /np\.reddit\.com\/u\/LinkifyBot/i.test(link),
+  (link: string) => /np\.reddit\.com\/login/i.test(link),
+  (link: string) => /stalas\.alm\.lt/i.test(link),
+  (link: string) => /preview\.redd\.it/i.test(link),
 ]
 
 export function filterUnwantedLinks(url: string): boolean {
