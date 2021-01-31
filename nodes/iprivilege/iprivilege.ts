@@ -49,7 +49,7 @@ module.exports = function (RED: Red) {
 
   RED.httpAdmin.get(`/iprivilege/:id`, async function (req: Request, res: Response) {
     const nodeId = req.params.id
-    const node = RED.nodes.getNode<Node>(nodeId)!
+    const node = RED.nodes.getNode<Node>(nodeId ?? '')!
     const context = asyncContext(node.context())
     const form = [
       '<div class="bg-washed-blue pa3 ba bw1 b--light-gray br2 mt4">',

@@ -24,15 +24,6 @@ export function Setup({ node }: { node: Node }) {
           node.log(`Processing ${url.toString()}`)
           node.status({ fill: 'yellow', shape: 'dot', text: `Processing ${url.toString()} ${time()}` })
 
-          if (false && url.hostname.includes('reddit.com')) {
-            const redditResponse = await fetchReddit(url)
-            switch (redditResponse.type) {
-              case 'html':
-              case 'link':
-              default:
-            }
-          }
-
           const html = cleanString(await fetchPage(url))
           const hast = parseHtml(html)
           const { content, contentAsText } = await extractContent(html, url.toString())
@@ -173,76 +164,6 @@ async function fetchPage(url: URL): Promise<string> {
   return content
 }
 
-export async function fetchReddit(url: URL): Promise<{ type: 'html'; html: string } | { type: 'link'; link: string }> {
-  let content = [] as RedditNestable<RedditResponse>[]
-  try {
-    const response = await axios.get<RedditNestable<RedditResponse>[]>(url.toString())
-    content = response.data ?? ''
-  } catch (error) {
-    prettyAxiosErrors(error)({
-      not200: (response) => {
-        throw `GET ${url.toString()} ${response.status}\n${inspect(response.headers)}\n${inspect(response.data)}`
-      },
-      noResponse: (request) => {
-        throw `No response: GET ${url.toString()}`
-      },
-      orElse: (message) => {
-        throw `GET ${url.toString()} unknown error message ${message}`
-      },
-    })
-  }
-
-  if (content.length === 0) {
-    throw 'Invalid response from the Reddit API'
-  }
-
-  const post = content[0]
-  if (isStringNonEmpty(post.data?.children[0]?.data?.url_overridden_by_dest)) {
-    try {
-      const url = new URL(post.data.children[0].data.url_overridden_by_dest)
-      if (['jpeg', 'jpg', 'png', 'gif'].some((it) => url.pathname.toLowerCase().endsWith(it))) {
-        return { type: 'html', html: `<img src="${url}"/>` }
-      }
-      return { type: 'link', link: post.data.children[0].data.url_overridden_by_dest }
-    } catch {
-      return { type: 'link', link: post.data.children[0].data.url_overridden_by_dest }
-    }
-  }
-
-  let html = decodeHTMLEntities(post.data?.children[0]?.data?.selftext_html ?? '')
-
-  if (content.length > 1) {
-    const comments = content[1]
-    html += `<p>Comments:</p><ul>${comments.data.children.map((it) => `<li>${extractComments(it)}</li>`)}</ul>`
-  }
-
-  function extractComments(parent: RedditNestable<{ replies?: RedditNestable[]; body_html?: string | null }>): string {
-    if (!parent.data.children[0].data.replies) {
-      return `<div>${decodeHTMLEntities(parent.data?.children[0]?.data?.body_html ?? '')}</div>`
-    }
-    return `<div>${decodeHTMLEntities(
-      parent.data?.children[0]?.data?.body_html ?? '',
-    )}</div><ul><li>${parent.data.children[0].data.replies?.map(extractComments)}</li></ul>`
-  }
-
-  return { type: 'html', html }
-}
-
-interface RedditNestable<T = {}> {
-  kind: string
-  data: T & {
-    children: Array<RedditNestable<T>>
-  }
-}
-interface RedditResponse {
-  title: string
-  selftext_html: string | null
-  selftext: string | null
-  url_overridden_by_dest?: string
-  replies?: RedditNestable[]
-  body_html?: string
-}
-
 function extractTitle(hast: Hast.Root): string | undefined {
   // list borrowed from https://github.com/microlinkhq/metascraper/blob/c83efa9a2b429b5e077e0a4d9c808dad8b939510/packages/metascraper-title/index.js
   return extractAsString(
@@ -319,6 +240,11 @@ function extractDate(hast: Hast.Root): Date | undefined {
 function extractAsString(candidates: Array<() => string | undefined>, hast: Hast.Root): string | undefined {
   for (let i = 0; i < candidates.length; i++) {
     const candidate = candidates[i]
+
+    if (!candidate) {
+      continue
+    }
+
     const element = candidate.call(null)
     if (isStringNonEmpty(element)) {
       return element
@@ -331,6 +257,11 @@ function extractAsString(candidates: Array<() => string | undefined>, hast: Hast
 function extractAsDate(candidates: Array<() => string | undefined>, hast: Hast.Root): Date | undefined {
   for (let i = 0; i < candidates.length; i++) {
     const candidate = candidates[i]
+
+    if (!candidate) {
+      continue
+    }
+
     const date = chrono.parseDate(candidate.call(null) ?? '')
     if (date) {
       return date
@@ -382,7 +313,7 @@ function extractSourceLink(content: string): string | undefined {
     ? regexes
         .reduce((acc, regex) => {
           const matches = [...Array.from((content as any).matchAll(regex))] as Array<string[]>
-          return [...matches.map((it) => it[1]), ...acc]
+          return [...matches.map((it) => it[1]!), ...acc]
         }, [] as string[])
         .filter((it) => {
           try {
@@ -424,7 +355,7 @@ async function extractContent(
 }
 
 function decodeHTMLEntities(text: string): string {
-  var entities = [
+  return [
     ['amp', '&'],
     ['apos', "'"],
     ['#x27', "'"],
@@ -435,10 +366,11 @@ function decodeHTMLEntities(text: string): string {
     ['gt', '>'],
     ['nbsp', ' '],
     ['quot', '"'],
-  ]
+  ].reduce((acc, [entity, char]) => {
+    if (!entity || !char) {
+      return acc
+    }
 
-  for (var i = 0, max = entities.length; i < max; ++i)
-    text = text.replace(new RegExp('&' + entities[i][0] + ';', 'g'), entities[i][1])
-
-  return text
+    return acc.replace(new RegExp(`&${entity};`, 'g'), char)
+  }, text)
 }

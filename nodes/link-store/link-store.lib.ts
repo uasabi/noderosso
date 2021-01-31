@@ -137,7 +137,7 @@ export function Setup({ node, context }: { node: Node; context: AsyncContext }) 
           if (!(it.url in acc)) {
             acc[it.url] = []
           }
-          acc[it.url] = [...acc[it.url], it]
+          acc[it.url] = [...(acc[it.url] ?? []), it]
           return acc
         }, {} as Record<string, Item[]>)
         send(Event.report(digest))

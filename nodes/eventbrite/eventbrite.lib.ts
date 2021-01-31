@@ -121,7 +121,7 @@ export function Setup({
       const newEventId = responseCopyEvent.data.id
       node.log(`A new event ${newEventId} was copied from ${eventId}.`)
       const { data: event } = await getSingleEvent({ eventId: newEventId })
-      const ticketClassId = event.ticket_classes[0].id
+      const ticketClassId = event.ticket_classes[0]?.id ?? ''
       await updateTicket({
         eventId: newEventId,
         ticketClassId,

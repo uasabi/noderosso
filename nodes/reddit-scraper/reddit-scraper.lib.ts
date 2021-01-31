@@ -171,8 +171,8 @@ export async function fetchPost(url: string): Promise<FetchingError | RedditLink
   }
 
   const replies = extractReplies(response.data)
-  const createdAt = isValidDate(new Date(response.data?.[0]?.data?.children?.[0].data.created_utc * 1000))
-    ? new Date(response.data?.[0]?.data?.children?.[0].data.created_utc * 1000).toISOString()
+  const createdAt = isValidDate(new Date((response.data?.[0]?.data?.children?.[0]?.data.created_utc ?? 0) * 1000))
+    ? new Date((response.data?.[0]?.data?.children?.[0]?.data.created_utc ?? 0) * 1000).toISOString()
     : new Date().toISOString()
 
   const articleUrl = response.data?.[0]?.data?.children?.[0]?.data?.url_overridden_by_dest
@@ -180,7 +180,7 @@ export async function fetchPost(url: string): Promise<FetchingError | RedditLink
     return {
       type: 'link',
       link: articleUrl,
-      score: response.data?.[0]?.data?.children?.[0].data?.score ?? 0,
+      score: response.data?.[0]?.data?.children?.[0]?.data?.score ?? 0,
       replies,
       permalink: url,
       createdAt,
@@ -189,8 +189,8 @@ export async function fetchPost(url: string): Promise<FetchingError | RedditLink
 
   return {
     type: 'self',
-    text: decodeHTMLEntities(response.data?.[0]?.data?.children?.[0].data?.selftext_html ?? ''),
-    score: response.data?.[0]?.data?.children?.[0].data?.score ?? 0,
+    text: decodeHTMLEntities(response.data?.[0]?.data?.children?.[0]?.data?.selftext_html ?? ''),
+    score: response.data?.[0]?.data?.children?.[0]?.data?.score ?? 0,
     replies,
     permalink: url,
     createdAt,
@@ -238,7 +238,7 @@ function hasOwnProperty<X extends {}, Y extends PropertyKey>(obj: X, prop: Y): o
 }
 
 function decodeHTMLEntities(text: string): string {
-  var entities = [
+  return [
     ['amp', '&'],
     ['apos', "'"],
     ['#x27', "'"],
@@ -249,12 +249,13 @@ function decodeHTMLEntities(text: string): string {
     ['gt', '>'],
     ['nbsp', ' '],
     ['quot', '"'],
-  ]
+  ].reduce((acc, [entity, char]) => {
+    if (!entity || !char) {
+      return acc
+    }
 
-  for (var i = 0, max = entities.length; i < max; ++i)
-    text = text.replace(new RegExp('&' + entities[i][0] + ';', 'g'), entities[i][1])
-
-  return text
+    return acc.replace(new RegExp(`&${entity};`, 'g'), char)
+  }, text)
 }
 
 function isValidUrl(url: unknown): url is string {

@@ -17,21 +17,21 @@ export function Setup({ context, maxSize, node }: { context: AsyncContext; maxSi
       case 'ADD.V1': {
         await context.set(generateId(), action.payload)
         const keys = (await context.keys()).sort((a, b) => {
-          return parseInt(b.split('-')[0], 10) - parseInt(a.split('-')[0], 10)
+          return parseInt(b.split('-')[0] ?? '0', 10) - parseInt(a.split('-')[0] ?? '0', 10)
         })
         if (keys.length >= maxSize) {
           const values = []
           let i = 0
           for (; i < maxSize; i++) {
-            values.push(await context.get(keys[i]))
+            values.push(await context.get(keys[i]!))
           }
           send(Event.batch(values))
-          const previousMsg = keys[maxSize] ? await context.get<object>(keys[maxSize]) : undefined
+          const previousMsg = isString(keys[maxSize]) ? await context.get<object>(keys[maxSize]!) : undefined
           if (!!previousMsg) {
             send(Event.overflow(previousMsg))
           }
           for (; i < keys.length; i++) {
-            await context.set(keys[i])
+            await context.set(keys[i]!)
           }
         }
         node.status({ fill: 'green', shape: 'dot', text: `Last added ${action._msgid} ${time()}` })
@@ -56,4 +56,8 @@ function assertUnreachable(x: never): void {}
 
 function time() {
   return new Date().toISOString().substr(11, 5)
+}
+
+function isString(value: unknown): value is string {
+  return {}.toString.call(value) === '[object String]'
 }

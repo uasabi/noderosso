@@ -78,12 +78,12 @@ module.exports = function (RED: Red) {
   RED.httpAdmin.get(`/classifier/:id`, async function (req: Request, res: Response) {
     const nodeId = req.params.id
     const limit = isNumber(parseInt(`${req.query.limit}`, 10)) ? parseInt(`${req.query.limit}`, 10) : 100
-    const node = RED.nodes.getNode<ClassifierNode>(nodeId)!
+    const node = RED.nodes.getNode<ClassifierNode>(nodeId ?? '')!
     const context = asyncContext(node.context())
     const categories = node.categories
     const keys = (await context.keys())
       .sort((a, b) => {
-        return parseInt(b.split('-')[0], 10) - parseInt(a.split('-')[0], 10)
+        return parseInt(b.split('-')[0] ?? '0', 10) - parseInt(a.split('-')[0] ?? '0', 10)
       })
       .slice(0, limit)
     const documents = (
@@ -115,7 +115,7 @@ module.exports = function (RED: Red) {
   ) {
     const nodeId = req.params.node
     const documentId = req.params.id
-    const node = RED.nodes.getNode<ClassifierNode>(nodeId)
+    const node = RED.nodes.getNode<ClassifierNode>(nodeId ?? '')
     if (!node || !documentId) {
       return res.redirect(`/admin/classifier/${nodeId}`)
     }

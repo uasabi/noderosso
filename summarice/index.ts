@@ -25,7 +25,7 @@ export function summarice(
 
   return groupSentences.flatMap((it) => {
     return {
-      ...it.sort((a, b) => a.normalisedScore - b.normalisedScore)[0],
+      ...it.sort((a, b) => a.normalisedScore - b.normalisedScore)[0]!,
       minScore: Math.min.apply(
         null,
         it.map((it) => it.normalisedScore),
@@ -59,7 +59,7 @@ export function computeSimilarity(
         if (currentIndex === i) {
           continue
         }
-        const score = distance.bow.cosine(bagOfWords, array[currentIndex].bagOfWords)
+        const score = distance.bow.cosine(bagOfWords, array[currentIndex]!.bagOfWords)
         cumulativeScore = cumulativeScore + score
       }
       return {
@@ -83,9 +83,9 @@ export function findPeaksAndTroughs<T>(array: T[], fn: (i: T) => number): { peak
   const troughs = [] as number[]
 
   for (let i = start; i <= end; i++) {
-    let current = fn(array[i])
-    let last = fn(array[i - 1])
-    let next = fn(array[i + 1])
+    let current = fn(array[i]!)
+    let last = fn(array[i - 1]!)
+    let next = fn(array[i + 1]!)
 
     if (current > next && current > last) peaks.push(i)
     else if (current < next && current < last) troughs.push(i)

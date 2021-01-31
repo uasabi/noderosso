@@ -167,7 +167,7 @@ export function Setup({
               acc[it.id] = it
               return acc
             }
-            acc[it.id].labels = [...acc[it.id].labels, ...it.labels]
+            acc[it.id]!.labels = [...(acc[it.id]?.labels ?? []), ...it.labels]
               .filter((it) => isStringNonEmpty(it))
               .filter(onlyUnique)
               .map((it) => it.toLowerCase())
