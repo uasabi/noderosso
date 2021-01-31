@@ -11,16 +11,19 @@ import * as Hast from 'hast'
 import * as chrono from 'chrono-node'
 import puppeteer from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
-import { readFileSync } from 'fs'
+import { promises } from 'fs'
 
 puppeteer.use(StealthPlugin())
 
-let readabilityPath: string | null = null
+let readabilityScript: Promise<string | null> = Promise.resolve(null)
 
 if (process.env['BAZEL_NODE_RUNFILES_HELPER']) {
-  readabilityPath = require(process.env['BAZEL_NODE_RUNFILES_HELPER']).resolve(
+  const readabilityPath = require(process.env['BAZEL_NODE_RUNFILES_HELPER']).resolve(
     'npm/node_modules/@mozilla/readability/Readability.js',
   )
+  if (readabilityPath) {
+    readabilityScript = promises.readFile(readabilityPath, 'utf8').catch(() => null)
+  }
 }
 
 export function Setup({ node }: { node: Node }) {
@@ -341,7 +344,8 @@ function extractSourceLink(content: string): string | undefined {
 async function extractContent(
   url: string,
 ): Promise<{ content: string | undefined; contentAsText: string | undefined }> {
-  if (!readabilityPath) {
+  const script = await readabilityScript
+  if (!script) {
     return { content: undefined, contentAsText: undefined }
   }
 
@@ -350,7 +354,7 @@ async function extractContent(
     const page = await browser.newPage()
     await page.goto(url, { waitUntil: 'networkidle0' })
     const res = (await page.evaluate(`(() => {
-      ${readFileSync(readabilityPath)}
+      ${script}
       const article = new Readability(document).parse()
       return article ? { content: article.content, contentAsText: article.textContent } : {content: undefined, contentAsText: undefined}
     })()`)) as { content: string | undefined; contentAsText: string | undefined }
