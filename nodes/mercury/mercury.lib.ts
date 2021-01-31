@@ -11,6 +11,7 @@ import * as Hast from 'hast'
 import * as chrono from 'chrono-node'
 import puppeteer from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
+import { readFileSync } from 'fs'
 
 puppeteer.use(StealthPlugin())
 
@@ -348,10 +349,8 @@ async function extractContent(
   try {
     const page = await browser.newPage()
     await page.goto(url, { waitUntil: 'networkidle0' })
-    await page.addScriptTag({
-      path: readabilityPath,
-    })
     const res = (await page.evaluate(`(() => {
+      ${readFileSync(readabilityPath)}
       const article = new Readability(document).parse()
       return article ? { content: article.content, contentAsText: article.textContent } : {content: undefined, contentAsText: undefined}
     })()`)) as { content: string | undefined; contentAsText: string | undefined }
