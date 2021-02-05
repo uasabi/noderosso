@@ -18,6 +18,7 @@ NODES = [
     "//nodes/reddit-scraper",
     "//nodes/wordpress-scraper",
     "//nodes/iprivilege",
+    "//nodes/my-first-node",
 ]
 
 NODE_RED_PACKAGES = [
