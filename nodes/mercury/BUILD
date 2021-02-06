@@ -4,6 +4,12 @@ package(default_visibility = ["//visibility:public"])
 
 node(
     name = "mercury",
+    test_deps = [
+        "//types",
+        "@npm//@types/node",
+        "@npm//@types/tape",
+        "@npm//tape",
+    ],
     deps = [
         "//nodes:axios",
         "//nodes:worker_node",
@@ -15,15 +21,10 @@ node(
         "@npm//hast-util-raw",
         "@npm//hast-util-select",
         "@npm//node-red",
-        "@npm//zod",
         "@npm//puppeteer-core",
         "@npm//puppeteer-extra",
-        "@npm//puppeteer-extra-plugin-stealth"
+        "@npm//puppeteer-extra-plugin-adblocker",
+        "@npm//puppeteer-extra-plugin-stealth",
+        "@npm//zod",
     ],
-    test_deps = [
-        "//types",
-        "@npm//@types/node",
-        "@npm//@types/tape",
-        "@npm//tape",
-    ]
 )

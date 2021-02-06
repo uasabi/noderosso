@@ -11,9 +11,12 @@ import * as Hast from 'hast'
 import * as chrono from 'chrono-node'
 import puppeteer from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
+import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker'
+
 import { promises } from 'fs'
 
 puppeteer.use(StealthPlugin())
+puppeteer.use(AdblockerPlugin({ blockTrackers: true }))
 
 let readabilityScript: Promise<string | null> = Promise.resolve(null)
 
