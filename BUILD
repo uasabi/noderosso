@@ -19,6 +19,7 @@ NODES = [
     "//nodes/wordpress-scraper",
     "//nodes/iprivilege",
     "//nodes/my-first-node",
+    "//nodes/smarterqueue",
 ]
 
 NODE_RED_PACKAGES = [
