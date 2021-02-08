@@ -26,6 +26,7 @@
     "human-interval": "^1.0.0",
     "mailparser": "^2.8.0",
     "node-red": "^1.2.9",
+    "node-red-contrib-cheerio-function": "^1.0.0-rc.5",
     "node-red-contrib-rss": "^0.1.5",
     "node-red-contrib-sendgrid": "^0.2.1",
     "normalize-url": "^5.3.0",
