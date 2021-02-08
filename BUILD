@@ -20,6 +20,7 @@ NODES = [
     "//nodes/iprivilege",
     "//nodes/my-first-node",
     "//nodes/smarterqueue",
+    "//nodes/twitter"
 ]
 
 NODE_RED_PACKAGES = [
