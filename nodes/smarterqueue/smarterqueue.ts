@@ -39,7 +39,7 @@ module.exports = function (RED: Red) {
     }
 
     WorkerNode({
-      fn: Setup({ node, context, slots, circuitBreakerMaxEmit }),
+      fn: Setup({ node, context, slots, circuitBreakerMaxEmit, newDate: () => new Date() }),
       isAction,
       isEvent,
       node,

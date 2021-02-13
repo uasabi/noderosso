@@ -1,19 +1,21 @@
 import test from 'tape'
 import { getNextSlot, Setup, Tweet } from './smarterqueue.lib'
 import humanInterval from 'human-interval'
-import { add, addDays, startOfWeek } from 'date-fns'
+import { add } from 'date-fns'
 
 function noop() {}
 
+// Sunday, January 1, 2023
+
 test('it should get the next slot', (assert) => {
-  const slot = getNextSlot(new Date('2021-02-07T12:00:00.000Z'), [1, humanInterval('1 day')!, humanInterval('6 days')!])
-  assert.equal(slot.toISOString(), '2021-02-08T00:00:00.000Z')
+  const slot = getNextSlot(new Date('2023-01-01T12:00:00.000Z'), [1, humanInterval('1 day')!, humanInterval('6 days')!])
+  assert.equal(slot.toISOString(), '2023-01-02T00:00:00.000Z')
   assert.end()
 })
 
 test('it should get the next slot next week', (assert) => {
-  const slot = getNextSlot(new Date('2021-02-09T12:00:00.000Z'), [1, humanInterval('1 day')!])
-  assert.equal(slot.toISOString(), '2021-02-14T00:00:00.001Z')
+  const slot = getNextSlot(new Date('2023-01-03T12:00:00.000Z'), [1, humanInterval('1 day')!])
+  assert.equal(slot.toISOString(), '2023-01-08T00:00:00.001Z')
   assert.end()
 })
 
@@ -24,6 +26,7 @@ test('it should queue', async (assert) => {
     context,
     slots: [1, humanInterval('1 day')!, humanInterval('2 day')!, humanInterval('3 day')!],
     circuitBreakerMaxEmit: 2,
+    newDate: () => new Date('2018-01-01T12:00:00.000Z'),
   })
   await input(
     { _msgid: '1', topic: 'QUEUE.V1', payload: { variations: [{ text: '1', images: ['link1', 'link2'] }] } },
@@ -37,7 +40,7 @@ test('it should queue', async (assert) => {
   const variations1 = Object.values(tweet1.variations)
   assert.equal(variations1[0]!.text, '1')
   assert.equal(variations1[0]!.images.join(','), 'link1,link2')
-  assert.equal(variations1[0]!.scheduleAt, addDays(startOfWeek(new Date()), 1).toISOString())
+  assert.equal(variations1[0]!.scheduleAt, '2018-01-02T00:00:00.000Z')
 
   await input(
     {
@@ -61,7 +64,7 @@ test('it should queue', async (assert) => {
   const variations2 = Object.values(tweet2.variations)
   assert.equal(variations2[0]!.text, '2')
   assert.equal(variations2[0]!.images.join(','), 'link3,link4')
-  assert.equal(variations2[0]!.scheduleAt, addDays(startOfWeek(new Date()), 2).toISOString())
+  assert.equal(variations2[0]!.scheduleAt, '2018-01-03T00:00:00.000Z')
 
   assert.equal(variations2[1]!.text, '3')
   assert.equal(variations2[1]!.images.join(','), 'link5')
@@ -77,6 +80,7 @@ test('it should publish', async (assert) => {
     context,
     slots: [1, humanInterval('1 day')!, humanInterval('2 day')!, humanInterval('3 day')!],
     circuitBreakerMaxEmit: 2,
+    newDate: () => new Date('2021-02-09T12:00:00.000Z'),
   })
   const items = [
     {
@@ -131,6 +135,7 @@ test('it should reschedule all', async (assert) => {
     context,
     slots: [1, humanInterval('1 day')!, humanInterval('2 day')!, humanInterval('3 day')!],
     circuitBreakerMaxEmit: 2,
+    newDate: () => new Date('2021-02-09T12:00:00.000Z'),
   })
   const items = [
     {
@@ -186,6 +191,7 @@ test('it should gc', async (assert) => {
     context,
     slots: [1, humanInterval('1 day')!, humanInterval('2 day')!, humanInterval('3 day')!],
     circuitBreakerMaxEmit: 2,
+    newDate: () => new Date('2021-02-09T12:00:00.000Z'),
   })
   const items = [
     {

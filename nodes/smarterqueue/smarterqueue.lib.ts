@@ -66,11 +66,13 @@ export function Setup({
   context,
   slots,
   circuitBreakerMaxEmit,
+  newDate,
 }: {
   node: Node
   context: AsyncContext
   slots: number[]
   circuitBreakerMaxEmit: number
+  newDate: () => Date
 }) {
   const scheduler = new Scheduler(context)
 
@@ -88,7 +90,7 @@ export function Setup({
       case 'QUEUE.V1': {
         const id = generateId()
 
-        const nextSlot = getNextSlot((await scheduler.getLastScheduledTime()) ?? new Date(), slots)
+        const nextSlot = getNextSlot((await scheduler.getLastScheduledTime()) ?? newDate(), slots)
 
         const firstVariation = action.payload.variations[0]!
         const firstVariationId = generateId()
@@ -177,7 +179,7 @@ export function Setup({
           return done()
         }
 
-        const nextScheduleTime = getNextSlot((await scheduler.getLastScheduledTime()) ?? new Date(), slots)
+        const nextScheduleTime = getNextSlot((await scheduler.getLastScheduledTime()) ?? newDate(), slots)
         const nextVariation = Object.values(newTweet.variations).find((it) => it.type !== 'unscheduled-variation')
 
         if (!nextVariation) {
@@ -252,7 +254,7 @@ export function Setup({
 
           const previousScheduledTime = firstValidVariation.publishedAt
           const nextSlot = getNextSlot(
-            index === 0 ? new Date() : (await scheduler.getLastScheduledTime()) ?? new Date(),
+            index === 0 ? newDate() : (await scheduler.getLastScheduledTime()) ?? newDate(),
             slots,
           )
 
