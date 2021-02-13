@@ -3,13 +3,13 @@
     category: 'function',
     color: '#a6bbcf',
     defaults: {
-      name: { value: '' }
+      name: { value: '' },
+      consumer_key: { value: '', required: true },
+      access_token_key: { value: '', required: true },
     },
     credentials: {
-      consumer_key: {type: 'password', required: true},
-      consumer_secret: {type: 'password', required: true},
-      access_token_key: {type: 'password', required: true},
-      access_token_secret: {type: 'password', required: true}
+      consumer_secret: { type: 'password', required: true },
+      access_token_secret: { type: 'password', required: true }
     },
     inputs: 1,
     outputs: 1,
@@ -27,7 +27,7 @@
   </div>
   <div class="form-row">
     <label for="node-input-consumer_key"><i class="fa fa-lock"></i> Consumer Key</label>
-    <input type="password" id="node-input-consumer_key" placeholder="Consumer Key">
+    <input type="input" id="node-input-consumer_key" placeholder="Consumer Key">
   </div>
   <div class="form-row">
     <label for="node-input-consumer_secret"><i class="fa fa-lock"></i> Consumer Secret</label>
@@ -35,7 +35,7 @@
   </div>
   <div class="form-row">
     <label for="node-input-access_token_key"><i class="fa fa-lock"></i> Access Token</label>
-    <input type="password" id="node-input-access_token_key" placeholder="Access Token">
+    <input type="input" id="node-input-access_token_key" placeholder="Access Token">
   </div>
   <div class="form-row">
     <label for="node-input-access_token_secret"><i class="fa fa-lock"></i> Access Token Secret</label>
@@ -45,4 +45,8 @@
 
 <script type="text/html" data-help-name="twitter">
   <p>Twitter node that can publish and retweet.</p>
+  <p>You can generate access tokens via twurl: <a href="https://github.com/twitter/twurl/" target="_blank">https://github.com/twitter/twurl</a></p>
+  <p>You can use the following command:</p>
+  <pre><code>twurl authorize --consumer-key key \ --consumer-secret secret</code></pre>
+  <p>You can find the tokens at <code>~/.twurlrc</code></p>
 </script>
