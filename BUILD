@@ -26,7 +26,6 @@ NODES = [
 NODE_RED_PACKAGES = [
     "@npm//node-red-contrib-rss",
     "@npm//node-red-contrib-sendgrid",
-    "@npm//node-red-contrib-cheerio-function",
 ]
 
 exports_files([
