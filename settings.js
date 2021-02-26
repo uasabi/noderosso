@@ -16,17 +16,6 @@
 
 const isProduction = process.env.NODE_ENV === 'production'
 
-// <hack>
-// This hack works around the @node-red/nodes/examples
-const { mkdirSync, rmdirSync } = require('fs')
-const { dirname, join, resolve } = require('path')
-
-const examplesDir = join(dirname(require.resolve('@node-red/nodes')), 'examples')
-rmdirSync(examplesDir, { recursive: true })
-
-mkdirSync(examplesDir)
-// </hack>
-
 module.exports = {
   // the tcp port that the Node-RED web server is listening on
   uiPort: process.env.PORT || 1880,
@@ -95,7 +84,7 @@ module.exports = {
 
   // Node-RED scans the `nodes` directory in the userDir to find local node files.
   // The following property can be used to specify an additional directory to scan.
-  nodesDir: resolve('./nodes'),
+  nodesDir: './nodes',
   // coreNodesDir: './node_modules/@node-red/nodes/core',
 
   // By default, the Node-RED UI is available at http://localhost:1880/
