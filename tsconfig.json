@@ -16,5 +16,8 @@
     "esModuleInterop": true,
     "noUncheckedIndexedAccess": true
   },
+  "paths": {
+    "@noderosso/*": ["*", "bazel-bin/*", "bazel-genfiles/*"]
+  },
   "exclude": ["bazel-*", "node_modules"]
 }

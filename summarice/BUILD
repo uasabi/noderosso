@@ -1,5 +1,5 @@
 load("@npm//@bazel/typescript:index.bzl", "ts_library")
-load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_test")
+load("@build_bazel_rules_nodejs//:index.bzl", "js_library", "nodejs_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -9,7 +9,7 @@ filegroup(
 )
 
 ts_library(
-    name = "summarice",
+    name = "summarice_lib",
     srcs = [":summarice_files"],
     deps = [
         "//types",
@@ -37,4 +37,12 @@ nodejs_test(
     name = "summarice_test",
     data = [":summarice_test_ts"],
     entry_point = ":test.ts",
+)
+
+js_library(
+    name = "summarice",
+    package_name = "@noderosso/summarice",
+    srcs = [],
+    visibility = ["//visibility:public"],
+    deps = [":summarice_lib"],
 )
