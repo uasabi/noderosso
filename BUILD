@@ -5,22 +5,7 @@ load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary")
 package(default_visibility = ["//visibility:public"])
 
 NODES = [
-    "//nodes/circular-buffer",
-    "//nodes/classifier",
-    "//nodes/eventbrite",
-    "//nodes/feedparse",
-    "//nodes/imap-reader",
-    "//nodes/link-store",
-    "//nodes/lru-cache",
     "//nodes/mercury",
-    "//nodes/postgres",
-    "//nodes/web-watcher",
-    "//nodes/reddit-scraper",
-    "//nodes/wordpress-scraper",
-    "//nodes/iprivilege",
-    "//nodes/my-first-node",
-    "//nodes/smarterqueue",
-    "//nodes/twitter"
 ]
 
 NODE_RED_PACKAGES = [
