@@ -307,7 +307,7 @@ function $jsonld(fn: (schema: any) => string | undefined, hast: Hast.Root): stri
   const ldJson = selectAll<Hast.Element>('script[type="application/ld+json"]', hast).map((it) => {
     const child = it.children[0] as Hast.Text
     try {
-      const schema = JSON.parse(child.value)
+      const schema = JSON.parse(child.value) as any
       return fn(schema)
     } catch {
       return undefined

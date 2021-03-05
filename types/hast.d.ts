@@ -1,6 +1,9 @@
 declare module '~hast/index' {
   import * as Unist from 'unist'
 
+  export interface Node extends Unist.Node {
+  }
+
   export interface Element extends Unist.Node {
     type: string
     tagName: string

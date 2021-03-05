@@ -1,4 +1,4 @@
-load("@npm//@bazel/typescript:index.bzl", "ts_library")
+load("@npm//@bazel/typescript:index.bzl", "ts_library", "ts_config", "ts_project")
 load("//nodes:index.bzl", "prettier", "prettier_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -12,9 +12,15 @@ filegroup(
     ],
 )
 
-ts_library(
+ts_project(
     name = "worker_node",
-    srcs = [":worker_node_files"],
+    tsconfig = "//:tsconfig",
+    validate = False,
+    srcs = [
+        "channel.ts",
+        "context.ts",
+        "worker-node.ts",
+    ],
     deps = [
         "//types",
         "@npm//@types/node",
@@ -22,14 +28,27 @@ ts_library(
     ],
 )
 
+#ts_library(
+#    name = "worker_node",
+#    srcs = [":worker_node_files"],
+#    deps = [
+#        "//types",
+#        "@npm//@types/node",
+#        "@npm//node-red",
+#    ],
+#)
+
 filegroup(
     name = "axios_files",
     srcs = ["axios.ts"],
 )
 
-ts_library(
+ts_project(
     name = "axios",
-    srcs = [":axios_files"],
+    tsconfig = "//:tsconfig",
+    validate = False,
+    declaration = True,
+    srcs = ["axios.ts"],
     deps = [
         "@npm//@types/human-interval",
         "@npm//@types/node",
@@ -37,6 +56,17 @@ ts_library(
         "@npm//human-interval",
     ],
 )
+
+#ts_library(
+#    name = "axios",
+#    srcs = [":axios_files"],
+#    deps = [
+#        "@npm//@types/human-interval",
+#        "@npm//@types/node",
+#        "@npm//axios",
+#        "@npm//human-interval",
+#    ],
+#)
 
 filegroup(
     name = "all_ts_files",
