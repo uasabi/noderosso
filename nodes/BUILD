@@ -47,6 +47,7 @@ ts_project(
     name = "axios",
     tsconfig = "//:tsconfig",
     validate = False,
+    declaration = True,
     srcs = ["axios.ts"],
     deps = [
         "@npm//@types/human-interval",

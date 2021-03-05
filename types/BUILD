@@ -11,4 +11,9 @@ ts_project(
     name = "types",
     validate = False,
     tsconfig = "//:tsconfig",
+    deps = [
+        "@npm//@types/express",
+        "@npm//@types/node",
+        "@npm//@types/unist",
+    ],
 )

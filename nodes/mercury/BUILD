@@ -52,6 +52,7 @@ ts_project(
         "//types",
         "@npm//@mozilla/readability",
         "@npm//@types/node",
+        "@npm//@types/hast",
         "@npm//chrono-node",
         "@npm//hast-util-raw",
         "@npm//hast-util-select",
