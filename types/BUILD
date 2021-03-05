@@ -1,8 +1,14 @@
-load("@npm//@bazel/typescript:index.bzl", "ts_library")
+load("@npm//@bazel/typescript:index.bzl", "ts_library", "ts_project")
 
 package(default_visibility = ["//visibility:public"])
 
-ts_library(
+#ts_library(
+#    name = "types",
+#    srcs = glob(["*.d.ts"]),
+#)
+
+ts_project(
     name = "types",
-    srcs = glob(["*.d.ts"]),
+    validate = False,
+    tsconfig = "//:tsconfig",
 )

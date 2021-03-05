@@ -2,7 +2,7 @@
 """
 
 load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary", "nodejs_test")
-load("@npm//@bazel/typescript:index.bzl", "ts_library")
+load("@npm//@bazel/typescript:index.bzl", "ts_library", "ts_config", "ts_project")
 
 def prettier_test(
         name,
@@ -74,11 +74,18 @@ def node(name = "", deps = [], data = [], test_deps = [], test_data = []):
         data = [name + ".html"] + data,
     )
 
-    ts_library(
+    ts_project(
         name = name,
         srcs = [":files"],
         deps = deps,
+        tsconfig = ":config",
     )
+
+    #ts_library(
+    #    name = name,
+    #    srcs = [":files"],
+    #    deps = deps,
+    #)
 
     native.filegroup(
         name = "test_files",

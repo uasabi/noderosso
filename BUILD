@@ -1,8 +1,11 @@
 load("@io_bazel_rules_docker//nodejs:image.bzl", "nodejs_image")
 load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push")
 load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary")
+load("@npm//@bazel/typescript:index.bzl", "ts_config")
 
 package(default_visibility = ["//visibility:public"])
+
+exports_files(["tsconfig.json"])
 
 NODES = [
     "//nodes/mercury",
@@ -74,4 +77,9 @@ test_suite(
         "//nodes:tslint",
         "//summarice:summarice_test",
     ] + ["{}:test".format(n) for n in NODES] + ["{}:tslint".format(n) for n in NODES],
+)
+
+ts_config(
+    name = "tsconfig",
+    src = "tsconfig.json",
 )
