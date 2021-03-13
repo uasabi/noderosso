@@ -17,11 +17,7 @@ test('it should throw error', async (assert) => {
 
   cases.forEach((it) => {
     assert.throws(csv2Tweets.bind(null, it))
-    // assert.notOk(csv2Tweets(it))
   })
 
   assert.end()
 })
-
-// `link,total_sources,sources,description,image_1,image_2,
-// https://learnk8s.io,1,https://www.reddit.com/r/kubernetes/comments/abc/abc,Kubernetes Networking: how to write your own CNI plug-in with bash,https.gif,,`,
