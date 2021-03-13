@@ -20,7 +20,8 @@ NODES = [
     "//nodes/iprivilege",
     "//nodes/my-first-node",
     "//nodes/smarterqueue",
-    "//nodes/twitter"
+    "//nodes/twitter",
+    "//nodes/tweet-importer",
 ]
 
 NODE_RED_PACKAGES = [
