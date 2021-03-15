@@ -1,6 +1,6 @@
 import { Red, Node, NodeProperties } from 'node-red'
-import { Setup } from './tweet-importer.lib'
-import { isAction, upgradeAction, isEvent } from './tweet-importer.common'
+import { csv2Tweets, Setup } from './tweet-importer.lib'
+import { isAction, upgradeAction, isEvent, Tweet } from './tweet-importer.common'
 import { WorkerNode } from '../worker-node'
 import { Request, Response } from 'express'
 import { readFileSync } from 'fs'
@@ -27,6 +27,25 @@ module.exports = function (RED: Red) {
   RED.httpAdmin.get(`/tweet-importer/:id`, async function (req: Request, res: Response) {
     const nodeId = req.params.id
 
+    if (!nodeId) {
+      res.redirect('/admin')
+      return
+    }
+
+    res.send(renderTemplate({ nodeId, csv: '' }))
+  })
+
+  function renderTemplate({
+    nodeId,
+    csv,
+    errors,
+    success,
+  }: {
+    nodeId: string
+    csv: string
+    errors?: Error[]
+    success?: string
+  }): string {
     const form = [
       '<div class="bg-washed-blue pa3 ba bw1 b--light-gray br2 mt4">',
       `  <form action="/admin/tweet-importer/${nodeId}" method="POST">`,
@@ -34,7 +53,7 @@ module.exports = function (RED: Red) {
       '    <input id="csv-input" type="file" name="file" class="mv3 input-reset ba w-100 br2 bg-white f4 pv2 ph3 b--silver border-box"/>',
       '    <p class="f2 tc">OR</p>',
       '    <p class="f5 mb0">Copy and paste csv text here.</p>',
-      '    <textarea id="csv-textarea" rows="5" name="csv" class="mv3 input-reset ba w-100 br2 bg-white f6 pv2 ph3 b--silver"></textarea>',
+      `    <textarea id="csv-textarea" rows="5" name="csv" class="mv3 input-reset ba w-100 br2 bg-white f6 pv2 ph3 b--silver">${csv}</textarea>`,
       '    <input type="submit" id="submit" name="submit" value="Submit" class="input-reset bn pv2 bg-navy white db w-100 ttu b f4 br1"/>',
       '  </form>',
       '</div>',
@@ -42,16 +61,26 @@ module.exports = function (RED: Red) {
       .map((it) => it.trim())
       .join('')
 
-    const html = `${form}`
-    res.send(
-      [
-        `<!DOCTYPE html>`,
-        `<head><title>Tweet Importer</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>${tachyonsCss}</style></head>`,
-        `<body class="sans-serif"><div class="mw7 center">${html}</div></body>`,
-        `<script>!${readCsvFile.toString()}()</script>`,
-      ].join(''),
-    )
-  })
+    const html = [
+      `${form}`,
+      `${
+        Array.isArray(errors) && errors.length > 0
+          ? `<ul>${errors
+              .map((it) => {
+                return `<li>${it.name}<pre>${it.message}</pre></li>`
+              })
+              .join('')}</ul>`
+          : ''
+      }`,
+      success ? `<p class='b f3'>${success}</p>` : '',
+    ].join('\n')
+    return [
+      `<!DOCTYPE html>`,
+      `<head><title>Tweet Importer</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>${tachyonsCss}</style></head>`,
+      `<body class="sans-serif"><div class="mw7 center">${html}</div></body>`,
+      `<script>!${readCsvFile.toString()}()</script>`,
+    ].join('')
+  }
 
   RED.httpAdmin.post(`/tweet-importer/:id`, async function (req: Request, res: Response) {
     const nodeId = req.params.id ?? ''
@@ -68,17 +97,37 @@ module.exports = function (RED: Red) {
         return res.redirect(`/admin/tweet-importer/${nodeId}`)
       }
 
+      const parsedTweets = csv2Tweets(csvText)
+      if (parsedTweets.some((it) => it instanceof Error)) {
+        res.send(
+          renderTemplate({ nodeId, csv: csvText, errors: parsedTweets.filter((it) => it instanceof Error) as Error[] }),
+        )
+        return
+      }
+
       node.receive({
         topic: 'IMPORT.V1',
         payload: {
           csv: csvText,
         },
       })
+
+      const images = (parsedTweets as Tweet[])
+        .flatMap((it) => it.images)
+        .map((it) => it.trim())
+        .filter((it) => it.length > 0)
+
+      res.send(
+        renderTemplate({
+          nodeId,
+          csv: '',
+          success: `Imported ${parsedTweets.length} tweets and ${images.length} images!`,
+        }),
+      )
+      return
     }
 
-    setTimeout(() => {
-      res.redirect(`/admin/tweet-importer/${nodeId}`)
-    }, 500)
+    res.send(renderTemplate({ nodeId, csv: '' }))
   })
 }
 

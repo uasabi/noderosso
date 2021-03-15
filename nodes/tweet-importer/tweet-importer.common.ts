@@ -20,8 +20,6 @@ const Schema = {
 
 export const TweetSchema = z.object({
   link: z.string().url().nonempty(),
-  total_sources: z.string().nonempty(),
-  sources: z.string().url().nonempty(),
   description: z.string().nonempty(),
   image_1: z.string().nullable().optional(),
   image_2: z.string().nullable().optional(),

@@ -14,7 +14,11 @@ export function Setup({ node }: { node: Node }) {
           const templatedTweets = csv2Tweets(csv)
 
           templatedTweets.forEach((tweet) => {
-            send(Event.tweet(tweet))
+            if (tweet instanceof Error) {
+              node.error(`Parse error [${tweet.name}]: ${tweet.message}`)
+            } else {
+              send(Event.tweet(tweet))
+            }
           })
           node.status({ fill: 'green', shape: 'dot', text: `Imported ${time()}` })
         } catch (error) {
@@ -37,13 +41,6 @@ function assertUnreachable(x: never): void {}
 
 function time() {
   return new Date().toISOString().substr(11, 5)
-}
-
-class ImageDownloadError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'ImageDownloadError'
-  }
 }
 
 function isString(value: unknown): value is string {
@@ -80,26 +77,53 @@ function shuffle<T>(arr: T[]): T[] {
   return arr
 }
 
-function newUrl(url: string) {
+function parseUrl(url: string): URL | URLParseError {
   try {
     return new URL(url)
   } catch (error) {
-    throw `${url} is not url`
+    return new URLParseError(`${url} is not url`)
   }
 }
 
-export function csv2Tweets(csv: string) {
-  let parsedCsv: ParsedTweet[] = parse(csv, {
-    columns: ['link', 'total_sources', 'sources', 'description', 'image_1', 'image_2'],
-    skip_empty_lines: true,
-    ignore_last_delimiters: true,
-  }).map((it: ParsedTweet) => {
-    if (!it.image_2) return it
-    return {
-      ...it,
-      image_2: it.image_2.split(',').join(''),
-    }
-  })
+class URLParseError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'URLParseError'
+  }
+}
+
+class TweetParseError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'TweetParseError'
+  }
+}
+
+class CSVParseError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'CSVParseError'
+  }
+}
+
+export function csv2Tweets(csv: string): Array<Tweet | TweetParseError | CSVParseError> {
+  let parsedCsv: Array<ParsedTweet | TweetParseError | CSVParseError> = []
+
+  try {
+    parsedCsv = parse(csv, {
+      columns: ['link', 'total_sources', 'sources', 'description', 'image_1', 'image_2'],
+      skip_empty_lines: true,
+      ignore_last_delimiters: true,
+    }).map((it: ParsedTweet) => {
+      if (!it.image_2) return it
+      return {
+        ...it,
+        image_2: it.image_2.split(',').join(''),
+      }
+    })
+  } catch (error) {
+    parsedCsv = [new CSVParseError(inspect(error))]
+  }
 
   const firstRow = parsedCsv[0]
 
@@ -116,83 +140,129 @@ export function csv2Tweets(csv: string) {
     parsedCsv = parsedCsv.slice(1)
   }
 
-  const records = (parsedCsv.map((it, index) => {
-    try {
-      return TweetSchema.parse(it)
-    } catch (error) {
-      throw `Error while parsing tweet schema at row ${index} \n${inspect(error)}`
-    }
-  }) as ParsedTweet[]).map((it) => {
-    const supportedImages = [/jpg$/i, /png$/i, /gif$/i, /jpeg$/i]
-    const gifRegex = /gif$/i
-
-    if (
-      isString(it.image_2) &&
-      it.image_2.length > 1 &&
-      supportedImages.some((ext) => ext.test(newUrl(it.image_2!).pathname))
-    ) {
-      if (it.image_2 && gifRegex.test(newUrl(it.image_2).pathname)) {
-        delete it.image_1
+  return parsedCsv
+    .map((it, index) => {
+      if (it instanceof Error) {
+        return it
       }
-    } else {
-      delete it.image_2
-    }
 
-    if (
-      isString(it.image_1) &&
-      it.image_1.length > 0 &&
-      supportedImages.some((ext) => ext.test(newUrl(it.image_1!).pathname))
-    ) {
-      // do nothing
-    } else {
-      if (it.image_2) {
-        it.image_1 = it.image_2
-        delete it.image_2
+      const validate = TweetSchema.safeParse({
+        link: it.link,
+        description: it.description,
+        image_1: it.image_1,
+        image_2: it.image_2,
+      })
+      if (validate.success) {
+        return validate.data
       } else {
-        delete it.image_1
+        const { fieldErrors, formErrors } = validate.error.flatten()
+        const errorMessages = Object.keys(fieldErrors).map((it) => {
+          return `${it}: ${fieldErrors[it]!.join(', ')}`
+        })
+        return new TweetParseError(
+          `Error while parsing tweet schema at row ${index}\n${[...formErrors, ...errorMessages].join(
+            '\n',
+          )}\nrow: ${JSON.stringify(it, null, 2)}`,
+        )
       }
-    }
-
-    return it
-  })
-
-  records.forEach((it) => {
-    if (it.description.match(LINK_REGEX)?.length || 0 > 0) {
-      throw `${it.description || 'unknown'} should not include any link.`
-    }
-  })
-
-  const tweets = records.map((it) => {
-    return (Object.keys(it) as Array<keyof typeof it>).reduce((acc, key) => {
-      if (it[key] && it[key]!.length > 0) {
-        acc[key] = it[key]!.replace(/\u2028/gi, '\n').trim()
+    })
+    .map((it) => {
+      if (it instanceof Error) {
+        return it
       }
-      return acc
-    }, {} as ParsedTweet)
-  })
 
-  const templatedTweets = tweets.map((it) => {
-    const CTAs = ['Read on:', 'Read more:', 'Read on', 'Read more', 'More', 'More:', '👉', '→']
-    const candidates = CTAs.map((cta) => {
-      const content = `${it.description}\n\n${cta} ${it.link}`
-      return { ...it, content, length: collapseLinks(content).length }
-    }).filter((it) => it.length <= 280)
+      const supportedImages = [/jpg$/i, /png$/i, /gif$/i, /jpeg$/i]
+      const gifRegex = /gif$/i
 
-    if (candidates.length === 0) {
-      throw `The tweet ${it.description} is too long! Cannot add the CTA.`
-    }
+      if (
+        isString(it.image_2) &&
+        it.image_2.length > 1 &&
+        supportedImages.some((ext) => {
+          const url = parseUrl(it.image_2!)
+          if (url instanceof Error) {
+            return false
+          }
+          return ext.test(url.pathname)
+        })
+      ) {
+        const url = parseUrl(it.image_2)
+        if (it.image_2 && !(url instanceof Error) && gifRegex.test(url.pathname)) {
+          delete it.image_1
+        }
+      } else {
+        delete it.image_2
+      }
 
-    const pickedTweet = shuffle(candidates)[0]!
-    const tweet: Tweet = { text: pickedTweet.content, images: [] }
-    if (pickedTweet.image_1) {
-      tweet.images = [...tweet.images, pickedTweet.image_1]
-    }
-    if (pickedTweet.image_2) {
-      tweet.images = [...tweet.images, pickedTweet.image_2]
-    }
+      if (
+        isString(it.image_1) &&
+        it.image_1.length > 0 &&
+        supportedImages.some((ext) => {
+          const url = parseUrl(it.image_1!)
+          if (url instanceof Error) {
+            return false
+          }
+          return ext.test(url.pathname)
+        })
+      ) {
+        // do nothing
+      } else {
+        if (it.image_2) {
+          it.image_1 = it.image_2
+          delete it.image_2
+        } else {
+          delete it.image_1
+        }
+      }
 
-    return tweet
-  })
+      return it
+    })
+    .map((it) => {
+      if (it instanceof Error) {
+        return it
+      }
 
-  return templatedTweets
+      if (it.description.match(LINK_REGEX)?.length || 0 > 0) {
+        return new TweetParseError(`${it.description || 'unknown'} should not include any link.`)
+      }
+
+      return it
+    })
+    .map((it) => {
+      if (it instanceof Error) {
+        return it
+      }
+
+      return (Object.keys(it) as Array<keyof typeof it>).reduce((acc, key) => {
+        if (it[key] && it[key]!.length > 0) {
+          acc[key] = it[key]!.replace(/\u2028/gi, '\n').trim()
+        }
+        return acc
+      }, {} as ParsedTweet)
+    })
+    .map((it) => {
+      if (it instanceof Error) {
+        return it
+      }
+
+      const CTAs = ['Read on:', 'Read more:', 'Read on', 'Read more', 'More', 'More:', '👉', '→']
+      const candidates = CTAs.map((cta) => {
+        const content = `${it.description}\n\n${cta} ${it.link}`
+        return { ...it, content, length: collapseLinks(content).length }
+      }).filter((it) => it.length <= 280)
+
+      if (candidates.length === 0) {
+        throw `The tweet ${it.description} is too long! Cannot add the CTA.`
+      }
+
+      const pickedTweet = shuffle(candidates)[0]!
+      const tweet: Tweet = { text: pickedTweet.content, images: [] }
+      if (pickedTweet.image_1) {
+        tweet.images = [...tweet.images, pickedTweet.image_1]
+      }
+      if (pickedTweet.image_2) {
+        tweet.images = [...tweet.images, pickedTweet.image_2]
+      }
+
+      return tweet
+    })
 }
