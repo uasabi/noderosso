@@ -27,6 +27,7 @@ NODES = [
 NODE_RED_PACKAGES = [
     "@npm//node-red-contrib-rss",
     "@npm//node-red-contrib-sendgrid",
+    "@npm//node-red-contrib-telegrambot",
 ]
 
 exports_files([
@@ -81,7 +82,7 @@ container_push(
     image = ":server",
     registry = "learnk8sregistry.azurecr.io",
     repository = "noderosso",
-    tag = "2021.02.001",
+    tag = "2021.03.001",
 )
 
 test_suite(
