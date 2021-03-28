@@ -16,6 +16,7 @@ NODES = [
     "//nodes/postgres",
     "//nodes/web-watcher",
     "//nodes/reddit-scraper",
+    "//nodes/reminder",
     "//nodes/wordpress-scraper",
     "//nodes/iprivilege",
     "//nodes/my-first-node",
