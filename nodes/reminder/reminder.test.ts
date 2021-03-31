@@ -4,7 +4,6 @@ import { NodeStatus } from 'node-red'
 
 test('Node setup', async (assert) => {
   const node = new MockNode() as any
-  const input = Setup({ node })
 
   assert.end()
 })

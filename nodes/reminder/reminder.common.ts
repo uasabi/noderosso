@@ -4,7 +4,7 @@ const Schema = {
   tick: z.object({
     _msgid: z.string(),
     topic: z.literal('TICK.V1'),
-  })
+  }),
 }
 
 export const actions = Schema.tick
@@ -14,7 +14,7 @@ export function upgradeAction(action: any, log: (message: string) => void): z.in
   return action
 }
 
-export const events = z.void();
+export const events = z.void()
 export type Events = ReturnType<typeof Event[keyof typeof Event]>
 export const isEvent = events.check.bind(events)
 
