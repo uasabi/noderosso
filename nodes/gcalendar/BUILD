@@ -3,7 +3,7 @@ load("//nodes:index.bzl", "node")
 package(default_visibility = ["//visibility:public"])
 
 node(
-    name = "reminder",
+    name = "gcalendar",
     test_data = [],
     test_deps = [
         "//types",
@@ -12,15 +12,14 @@ node(
         "@npm//tape",
     ],
     deps = [
-        "//nodes:axios",
         "//nodes:worker_node",
         "//types",
-        "@npm//@types/node",
         "@npm//@types/express",
-        "@npm//@types/luxon",
+        "@npm//@types/node",
+        "@npm//chrono-node",
+        "@npm//date-fns",
+        "@npm//googleapis",
         "@npm//node-red",
         "@npm//zod",
-        "@npm//googleapis",
-        "@npm//luxon"
     ],
 )

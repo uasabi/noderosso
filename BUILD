@@ -9,20 +9,20 @@ NODES = [
     "//nodes/classifier",
     "//nodes/eventbrite",
     "//nodes/feedparse",
+    "//nodes/gcalendar",
     "//nodes/imap-reader",
+    "//nodes/iprivilege",
     "//nodes/link-store",
     "//nodes/lru-cache",
     "//nodes/mercury",
-    "//nodes/postgres",
-    "//nodes/web-watcher",
-    "//nodes/reddit-scraper",
-    "//nodes/reminder",
-    "//nodes/wordpress-scraper",
-    "//nodes/iprivilege",
     "//nodes/my-first-node",
+    "//nodes/postgres",
+    "//nodes/reddit-scraper",
     "//nodes/smarterqueue",
     "//nodes/twitter",
     "//nodes/tweet-importer",
+    "//nodes/web-watcher",
+    "//nodes/wordpress-scraper",
 ]
 
 NODE_RED_PACKAGES = [
@@ -83,7 +83,7 @@ container_push(
     image = ":server",
     registry = "learnk8sregistry.azurecr.io",
     repository = "noderosso",
-    tag = "2021.03.001",
+    tag = "2021.04.001",
 )
 
 test_suite(

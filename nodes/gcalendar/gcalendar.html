@@ -1,0 +1,116 @@
+<script type="text/javascript">
+  (function () {
+    RED.nodes.registerType('gcalendar', {
+      category: 'function',
+      color: '#a6bbcf',
+      defaults: {
+        name: { value: '' }
+      },
+      credentials: {
+        clientId: { type: 'text', required: true },
+        clientSecret: { type: 'password', required: true },
+        accessToken: { type: 'password', required: true, },
+        refreshToken: { type: 'password', required: true, },
+      },
+      inputs: 1,
+      outputs: 0,
+      icon: 'file.png',
+      label: function () {
+        return this.name || 'GCalendar'
+      },
+      oneditprepare: function () {
+        const accessToken = $('#node-input-accessToken').val()
+        const refreshToken = $('#node-input-refreshToken').val()
+
+        if (accessToken.trim().length === 0 || refreshToken.trim().length === 0) {
+          $('.step-2').hide()
+          $('.step-3').hide()
+        } else {
+          $('.hide-when-completed').hide()
+        }
+
+        $('#gcalendar-auth').on('click', event => {
+          event.preventDefault()
+
+          $.post(`gcalendar/${this.id}/auth`, {
+            clientId: $('#node-input-clientId').val(),
+            clientSecret: $('#node-input-clientSecret').val(),
+            urn: $('#node-input-urn').val()
+          })
+          .done(response => {
+            if (response.error) {
+              console.log(response)
+              return
+            }
+
+            window.open(response.redirectUrl, '_blank')
+            $('.step-2').show()
+          })
+        })
+
+        $('#gcalendar-code').on('click', event => {
+          event.preventDefault()
+
+          $.post(`gcalendar/${this.id}/token`, {
+            clientId: $('#node-input-clientId').val(),
+            clientSecret: $('#node-input-clientSecret').val(),
+            urn: $('#node-input-urn').val(),
+            code: $('#node-input-code').val(),
+          })
+          .done((response) => {
+            if (response.error) {
+              console.log(response)
+              return
+            }
+
+            $('.step-3').show()
+            $('#node-input-accessToken').val(response.accessToken)
+            $('#node-input-refreshToken').val(response.refreshToken)
+            $('.hide-when-completed').hide()
+          })
+        })
+      }
+    })
+  })();
+</script>
+
+<script type="text/html" data-template-name="gcalendar">
+ <div class="form-row">
+    <label for="node-input-prefix"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name">
+ </div>
+  <div class="form-row">
+    <label for="node-input-clientId"><i class="icon-tag"></i> Client ID</label>
+    <input type="text" id="node-input-clientId">
+  </div>
+  <div class="form-row">
+    <label for="node-input-clientSecret"><i class="icon-tag"></i> Client secret</label>
+    <input type="password" id="node-input-clientSecret">
+  </div>
+  <div class="form-row hide-when-completed">
+    <label for="node-input-urn"><i class="icon-tag"></i> Redirect URN</label>
+    <input type="text" id="node-input-urn">
+  </div>
+  <div class="form-row hide-when-completed">
+    <button id="gcalendar-auth" class="ui-button ui-corner-all ui-widget primary">Generate code</button>
+  </div>
+  <div class="form-row step-2 hide-when-completed">
+    <label for="node-input-code"><i class="icon-tag"></i> Code</label>
+    <input type="text" id="node-input-code">
+  </div>
+  <div class="form-row step-2 hide-when-completed">
+    <button id="gcalendar-code" class="ui-button ui-corner-all ui-widget primary">Generate access & refresh token</button>
+  </div>
+  <div class="form-row step-3">
+    <label for="node-input-accessToken"><i class="icon-tag"></i> Access Token</label>
+    <input type="password" id="node-input-accessToken">
+  </div>
+  <div class="form-row step-3">
+    <label for="node-input-refreshToken"><i class="icon-tag"></i> Refresh Token</label>
+    <input type="password" id="node-input-refreshToken">
+  </div>
+</script>
+
+<script type="text/html" data-help-name="gcalendar">
+  <p>Updates reminder events and creates envents on Google Calendar</p>
+</script>

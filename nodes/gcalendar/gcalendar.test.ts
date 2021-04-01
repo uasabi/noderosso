@@ -1,5 +1,5 @@
 import test from 'tape'
-import { Setup } from './reminder.lib'
+import { Setup } from './gcalendar.lib'
 import { NodeStatus } from 'node-red'
 
 test('Node setup', async (assert) => {
