@@ -11,7 +11,6 @@ const Schema = {
       before: z.string().nonempty().optional(),
       after: z.string().nonempty().optional(),
       query: z.string().optional(),
-      timezone: z.string().nonempty().optional(),
     }),
   }),
   list: Message.extend({

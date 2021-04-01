@@ -38,7 +38,6 @@ export function Setup({ node, auth }: { node: Node; auth: Auth.OAuth2Client }) {
         const before = parseDate(action.payload.before ?? '') ?? undefined
         const after = parseDate(action.payload.after ?? '') ?? undefined
         const query = action.payload.query ?? 'REMINDER'
-        const timezone = action.payload.timezone ?? 'UTC'
 
         const events =
           (
@@ -46,7 +45,7 @@ export function Setup({ node, auth }: { node: Node; auth: Auth.OAuth2Client }) {
               calendarId,
               singleEvents: true,
               q: query,
-              timeZone: timezone,
+              timeZone: 'UTC',
               timeMax: (before ?? now).toISOString(),
               timeMin: (after ?? sub(before ?? now, { weeks: 1 })).toISOString(),
             })
@@ -82,13 +81,13 @@ export function Setup({ node, auth }: { node: Node; auth: Auth.OAuth2Client }) {
               requestBody: {
                 start: {
                   dateTime: newStartDate.toISOString(),
-                  timeZone: timezone,
+                  timeZone: event.start?.timeZone ?? 'UTC',
                 },
                 ...(duration
                   ? {
                       end: {
                         dateTime: add(newStartDate, { seconds: Math.round(duration / 1000) }).toISOString(),
-                        timeZone: timezone,
+                        timeZone: event.end?.timeZone ?? 'UTC',
                       },
                     }
                   : {}),
