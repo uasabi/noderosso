@@ -5,7 +5,7 @@ test('it should buffer', async (assert) => {
   assert.plan(7)
 
   const context = new MockContext()
-  const input = Setup({ maxSize: 3, context, node: { status: () => {} } as any })
+  const input = Setup({ maxSize: 3, context, node: { status: () => {} } as any, dispatchWhenIncomplete: false })
 
   await input(
     { payload: 1, topic: 'ADD.V1', _msgid: '1' },
@@ -43,11 +43,17 @@ test('it should buffer', async (assert) => {
   assert.end()
 })
 
-test.only('it should dedupe', async (assert) => {
+test('it should dedupe', async (assert) => {
   assert.plan(5)
 
   const context = new MockContext()
-  const input = Setup({ maxSize: 5, context, node: { status: () => {} } as any, dedupeField: 'id' })
+  const input = Setup({
+    maxSize: 5,
+    context,
+    node: { status: () => {} } as any,
+    dedupeField: 'id',
+    dispatchWhenIncomplete: false,
+  })
 
   await input(
     { payload: 1, topic: 'ADD.V1', _msgid: '1' },
@@ -75,6 +81,22 @@ test.only('it should dedupe', async (assert) => {
 
   assert.equal((await context.keys()).length, 3)
 
+  assert.end()
+})
+
+test('it should buffer and dispatch immediately', async (assert) => {
+  assert.plan(2)
+
+  const context = new MockContext()
+  const input = Setup({ maxSize: 3, context, node: { status: () => {} } as any, dispatchWhenIncomplete: true })
+
+  await input(
+    { payload: 4, topic: 'ADD.V1', _msgid: '1' },
+    (message) => {
+      assert.deepEqual(message, { topic: 'BATCH.V1', payload: [4] })
+    },
+    () => assert.pass(),
+  )
   assert.end()
 })
 

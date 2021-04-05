@@ -7,11 +7,13 @@ export function Setup({
   maxSize,
   node,
   dedupeField,
+  dispatchWhenIncomplete,
 }: {
   context: AsyncContext
   maxSize: number
   node: Node
   dedupeField?: string
+  dispatchWhenIncomplete: boolean
 }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
     switch (action.topic) {
@@ -24,6 +26,7 @@ export function Setup({
         node.status({})
         return done()
       }
+
       case 'ADD.V1': {
         if (dedupeField) {
           const keys = await context.keys()
@@ -43,13 +46,25 @@ export function Setup({
         const keys = (await context.keys()).sort((a, b) => {
           return parseInt(b.split('-')[0] ?? '0', 10) - parseInt(a.split('-')[0] ?? '0', 10)
         })
-        if (keys.length >= maxSize) {
+
+        let i = 0
+        if (dispatchWhenIncomplete) {
           const values = []
-          let i = 0
-          for (; i < maxSize; i++) {
+          for (; i < keys.length; i++) {
             values.push(await context.get(keys[i]!))
           }
           send(Event.batch(values))
+        } else {
+          if (keys.length >= maxSize) {
+            const values = []
+            for (; i < maxSize; i++) {
+              values.push(await context.get(keys[i]!))
+            }
+            send(Event.batch(values))
+          }
+        }
+
+        if (keys.length >= maxSize) {
           const previousMsg = isString(keys[maxSize]) ? await context.get<object>(keys[maxSize]!) : undefined
           if (!!previousMsg) {
             send(Event.overflow(previousMsg))

@@ -5,6 +5,7 @@ import * as chrono from 'chrono-node'
 import { URL } from 'url'
 import { differenceInHours } from 'date-fns'
 import { stringify } from 'querystring'
+import { setTimeout } from 'timers'
 
 export function Setup({
   node,
@@ -47,7 +48,7 @@ export function Setup({
 
           try {
             node.log(`Fetching ${pushshiftUrl}`)
-            response = await axios.get<PushShiftResponse>(pushshiftUrl)
+            response = await Promise.all([axios.get<PushShiftResponse>(pushshiftUrl), wait(600)]).then(([it, _]) => it!)
           } catch (error) {
             const message = prettyAxiosErrors(error)({
               not200: (response) => `Received ${response.status} response (expecting 200) for ${pushshiftUrl}`,
@@ -317,4 +318,8 @@ interface PushShiftResponse {
     permalink: string
     created_utc: number
   }[]
+}
+
+async function wait(ms: number): Promise<void> {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms))
 }
