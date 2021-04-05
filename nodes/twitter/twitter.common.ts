@@ -1,5 +1,4 @@
 import * as z from 'zod'
-import { objectUtil } from 'zod/lib/src/helpers/objectUtil'
 
 const Message = z.object({ _msgid: z.string() })
 const TweetLink = z.object({
@@ -35,14 +34,18 @@ const Schema = {
 
 export const actions = z.union([Schema.publish, Schema.retweet])
 export type Actions = z.infer<typeof actions>
-export const isAction = actions.check.bind(actions)
+export function isAction(action: unknown): action is Actions {
+  return actions.safeParse(action).success
+}
 export function upgradeAction(action: any, log: (message: string) => void): z.infer<typeof actions> {
   return action
 }
 
 export const events = z.union([Schema.published, Schema.retweeted, Schema.failed])
 export type Events = ReturnType<typeof Event[keyof typeof Event]>
-export const isEvent = events.check.bind(events)
+export function isEvent(event: unknown): event is Events {
+  return events.safeParse(event).success
+}
 
 export const Event = {
   published(args: Omit<z.infer<typeof Schema.published>, 'topic'>['payload']): z.infer<typeof Schema.published> {

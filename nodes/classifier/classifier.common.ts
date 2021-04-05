@@ -1,7 +1,6 @@
 import * as z from 'zod'
 import { StatusFill, StatusShape } from 'node-red'
 import { inspect } from 'util'
-import { objectUtil } from 'zod/lib/src/helpers/objectUtil'
 
 export const classifiedDocument = z.object({
   id: z.string().nonempty(),
@@ -142,11 +141,15 @@ export const Reply = {
 
 export const commands = z.union([Schema.command.classify, Schema.command.shutdown, Schema.command.train])
 export type Commands = ReturnType<typeof Command[keyof typeof Command]>
-export const isCommand = commands.check.bind(commands)
+export function isCommand(command: unknown): command is Commands {
+  return commands.safeParse(command).success
+}
 
 export const replies = z.union([Schema.reply.error, Schema.reply.log, Schema.reply.status, Schema.reply.result])
 export type Replies = ReturnType<typeof Reply[keyof typeof Reply]>
-export const isReply = replies.check.bind(replies)
+export function isReply(reply: unknown): reply is Replies {
+  return replies.safeParse(reply).success
+}
 
 export const actions = z.union([
   Schema.action.classify,
@@ -157,7 +160,9 @@ export const actions = z.union([
   Schema.action.shutdown,
 ])
 export type Actions = z.infer<typeof actions>
-export const isAction = actions.check.bind(actions)
+export function isAction(action: unknown): action is Actions {
+  return actions.safeParse(action).success
+}
 export function upgradeAction(action: any, log: (message: string) => void): z.infer<typeof actions> {
   if ('topic' in action && isString(action.topic)) {
     return action as z.infer<typeof actions>
@@ -188,7 +193,9 @@ export const Event = {
 
 export const events = Schema.event.classified
 export type Events = ReturnType<typeof Event[keyof typeof Event]>
-export const isEvent = events.check.bind(events)
+export function isEvent(event: unknown): event is Events {
+  return events.safeParse(event).success
+}
 
 function isString(value: unknown): value is string {
   return {}.toString.call(value) === '[object String]'

@@ -1,5 +1,4 @@
 import * as z from 'zod'
-import { objectUtil } from 'zod/lib/src/helpers/objectUtil'
 
 const Message = z.object({ _msgid: z.string() })
 
@@ -57,7 +56,9 @@ export const actions = z.union([
   Schema.gc,
 ])
 export type Actions = z.infer<typeof actions>
-export const isAction = actions.check.bind(actions)
+export function isAction(action: unknown): action is Actions {
+  return actions.safeParse(action).success
+}
 export function upgradeAction(action: any, log: (message: string) => void): z.infer<typeof actions> {
   return action
 }
@@ -70,4 +71,6 @@ export const Event = {
 
 export const events = Schema.publish
 export type Events = ReturnType<typeof Event[keyof typeof Event]>
-export const isEvent = events.check.bind(events)
+export function isEvent(event: unknown): event is Events {
+  return events.safeParse(event).success
+}

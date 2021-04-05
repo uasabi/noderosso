@@ -1,6 +1,5 @@
 import * as z from 'zod'
 import { inspect } from 'util'
-import { objectUtil } from 'zod/lib/src/helpers/objectUtil'
 
 const Message = z.object({ _msgid: z.string() })
 
@@ -40,7 +39,9 @@ const Schema = {
 
 export const actions = z.union([Schema.flush, Schema.search, Schema.tick])
 export type Actions = z.infer<typeof actions>
-export const isAction = actions.check.bind(actions)
+export function isAction(action: unknown): action is Actions {
+  return actions.safeParse(action).success
+}
 export function upgradeAction(action: any, log: (message: string) => void): z.infer<typeof actions> {
   if ('topic' in action && isString(action.topic)) {
     return action as z.infer<typeof actions>
@@ -63,10 +64,14 @@ export const Event = {
 
 export const events = Schema.email
 export type Events = ReturnType<typeof Event[keyof typeof Event]>
-export const isEvent = events.check.bind(events)
+export function isEvent(event: unknown): event is Events {
+  return events.safeParse(event).success
+}
 
 function isString(value: unknown): value is string {
   return {}.toString.call(value) === '[object String]'
 }
 
-export const isGmailEmail = Schema.gmail.check.bind(Schema.gmail)
+export function isGmailEmail(email: unknown): email is z.infer<typeof Schema.gmail> {
+  return Schema.gmail.safeParse(email).success
+}
