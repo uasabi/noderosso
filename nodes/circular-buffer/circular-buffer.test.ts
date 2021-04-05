@@ -43,6 +43,41 @@ test('it should buffer', async (assert) => {
   assert.end()
 })
 
+test.only('it should dedupe', async (assert) => {
+  assert.plan(5)
+
+  const context = new MockContext()
+  const input = Setup({ maxSize: 5, context, node: { status: () => {} } as any, dedupeField: 'id' })
+
+  await input(
+    { payload: 1, topic: 'ADD.V1', _msgid: '1' },
+    () => assert.fail(),
+    () => assert.pass('first'),
+  )
+  await wait(10)
+  await input(
+    { payload: 1, topic: 'ADD.V1', _msgid: '1' },
+    () => assert.fail(),
+    () => assert.pass('second'),
+  )
+  await wait(10)
+  await input(
+    { payload: { id: '1' }, topic: 'ADD.V1', _msgid: '1' },
+    () => assert.fail(),
+    () => assert.pass('third'),
+  )
+  await wait(10)
+  await input(
+    { payload: { id: '1' }, topic: 'ADD.V1', _msgid: '1' },
+    () => assert.fail(),
+    () => assert.pass('fourth'),
+  )
+
+  assert.equal((await context.keys()).length, 3)
+
+  assert.end()
+})
+
 function wait(ms: number): Promise<void> {
   return new Promise<void>((resolve) => setTimeout(resolve, ms))
 }

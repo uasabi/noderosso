@@ -2,7 +2,17 @@ import { AsyncContext } from '../context'
 import { Node } from 'node-red'
 import { Events, Event, Actions } from './circular-buffer.common'
 
-export function Setup({ context, maxSize, node }: { context: AsyncContext; maxSize: number; node: Node }) {
+export function Setup({
+  context,
+  maxSize,
+  node,
+  dedupeField,
+}: {
+  context: AsyncContext
+  maxSize: number
+  node: Node
+  dedupeField?: string
+}) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
     switch (action.topic) {
       case 'FLUSH.V1': {
@@ -15,6 +25,20 @@ export function Setup({ context, maxSize, node }: { context: AsyncContext; maxSi
         return done()
       }
       case 'ADD.V1': {
+        if (dedupeField) {
+          const keys = await context.keys()
+          for (const key of keys) {
+            const item = await context.get<unknown>(key)
+            if (
+              isObject(item) &&
+              isObject(action.payload) &&
+              (item as any)[dedupeField] === (action.payload as any)[dedupeField]
+            ) {
+              return done()
+            }
+          }
+        }
+
         await context.set(generateId(), action.payload)
         const keys = (await context.keys()).sort((a, b) => {
           return parseInt(b.split('-')[0] ?? '0', 10) - parseInt(a.split('-')[0] ?? '0', 10)
@@ -60,4 +84,8 @@ function time() {
 
 function isString(value: unknown): value is string {
   return {}.toString.call(value) === '[object String]'
+}
+
+function isObject(obj: unknown): obj is object {
+  return {}.toString.call(obj) === '[object Object]' && obj != null
 }

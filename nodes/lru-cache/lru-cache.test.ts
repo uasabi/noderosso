@@ -26,7 +26,7 @@ test('it should release old keys', async (assert) => {
 })
 
 test('it should dedupe', async (assert) => {
-  assert.plan(1)
+  assert.plan(2)
 
   const context = new MockContext()
   await context.set('1', { value: { id: '1' }, time: Date.now() - 3000 })

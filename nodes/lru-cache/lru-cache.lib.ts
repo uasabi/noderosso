@@ -47,10 +47,11 @@ export function Setup({
           for (const key of keys) {
             const item = await context.get<Item>(key)
             if ((item?.value as any)[dedupeField] === action.payload[dedupeField]) {
-              return
+              return done()
             }
           }
         }
+
         await context.set(uuid(), { time: Date.now(), value: action.payload })
         node.status({ fill: 'green', shape: 'dot', text: `Last added ${action._msgid} ${time()}` })
         return done()
