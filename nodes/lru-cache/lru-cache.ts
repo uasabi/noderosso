@@ -6,11 +6,13 @@ import { upgradeAction, isAction, isEvent } from './lru-cache.common'
 import { WorkerNode } from '../worker-node'
 
 module.exports = function (RED: Red) {
-  function LRUCache(this: Node, config: NodeProperties & { ttl: unknown }) {
+  function LRUCache(this: Node, config: NodeProperties & { ttl: unknown; dedupeField: unknown }) {
     RED.nodes.createNode(this, config)
     const node = this
     const context = asyncContext(node.context())
     const ttl = isString(config.ttl) ? humanInterval(config.ttl) : undefined
+    const dedupeField =
+      isString(config.dedupeField) && config.dedupeField.trim().length > 0 ? config.dedupeField.trim() : undefined
 
     if (!isNumber(ttl)) {
       node.error(`Please enter a valid ttl`)
@@ -18,7 +20,7 @@ module.exports = function (RED: Red) {
     }
 
     WorkerNode({
-      fn: Setup({ context, ttl, node }),
+      fn: Setup({ context, ttl, node, dedupeField }),
       isAction,
       isEvent,
       node,

@@ -2,7 +2,17 @@ import { AsyncContext } from '../context'
 import { Node } from 'node-red'
 import { Actions, Item, isItem, Event, Events } from './lru-cache.common'
 
-export function Setup({ context, ttl, node }: { context: AsyncContext; ttl: number; node: Node }) {
+export function Setup({
+  context,
+  ttl,
+  node,
+  dedupeField,
+}: {
+  context: AsyncContext
+  ttl: number
+  node: Node
+  dedupeField?: string
+}) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
     switch (action.topic) {
       case 'FLUSH.V1': {
@@ -32,6 +42,15 @@ export function Setup({ context, ttl, node }: { context: AsyncContext; ttl: numb
         return done()
       }
       case 'SET.V1': {
+        if (dedupeField) {
+          const keys = await context.keys()
+          for (const key of keys) {
+            const item = await context.get<Item>(key)
+            if ((item?.value as any)[dedupeField] === action.payload[dedupeField]) {
+              return
+            }
+          }
+        }
         await context.set(uuid(), { time: Date.now(), value: action.payload })
         node.status({ fill: 'green', shape: 'dot', text: `Last added ${action._msgid} ${time()}` })
         return done()
