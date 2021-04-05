@@ -33,15 +33,18 @@ export type Tweet = {
 
 export const actions = Schema.import
 export type Actions = z.infer<typeof actions>
-export const isAction = actions.check.bind(actions)
+export function isAction(action: unknown): action is Actions {
+  return actions.safeParse(action).success
+}
 export function upgradeAction(action: any, log: (message: string) => void): z.infer<typeof actions> {
   return action
 }
 
 export const events = Schema.tweet
 export type Events = ReturnType<typeof Event[keyof typeof Event]>
-export const isEvent = events.check.bind(events)
-
+export function isEvent(event: unknown): event is Events {
+  return events.safeParse(event).success
+}
 export const Event = {
   tweet(args: Omit<z.infer<typeof Schema.tweet>, 'topic'>['payload']): z.infer<typeof Schema.tweet> {
     return { topic: 'TWEET.V1' as const, payload: args }

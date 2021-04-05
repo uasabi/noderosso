@@ -46,7 +46,7 @@
     "wink-distance": "^2.0.0",
     "wink-naive-bayes-text-classifier": "^2.0.1",
     "wink-nlp-utils": "^2.0.6",
-    "zod": "^1.11.0"
+    "zod": "^3.0.0-alpha.33"
   },
   "devDependencies": {
     "@bazel/bazelisk": "^1.7.3",

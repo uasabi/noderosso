@@ -16,6 +16,7 @@ import {
   Actions,
 } from './classifier.common'
 import { inspect } from 'util'
+import { z } from 'zod'
 
 export function Setup({
   node,
@@ -81,7 +82,7 @@ export function Setup({
         const dataset = await keys.reduce(async (accPromise, it) => {
           const acc = await accPromise
           const document = { ...(await context.get<DocumentRecord>(it)), id: it } // backwards compatibility
-          if (!documentRecord.check(document)) {
+          if (!isDocumentRecord(document)) {
             return acc
           }
           if (!document.verified) {
@@ -104,7 +105,7 @@ export function Setup({
       case 'ADD_CLASSIFICATION.V1': {
         if (categories.includes(action.payload.category)) {
           const doc = await context.get<DocumentRecord>(action.payload.documentId)
-          if (documentRecord.check(doc)) {
+          if (isDocumentRecord(doc)) {
             node.status({
               fill: 'green',
               shape: 'dot',
@@ -125,7 +126,7 @@ export function Setup({
         const keys: string[] = await context.keys()
         for (const key of keys) {
           const document = { ...(await context.get<DocumentRecord>(key)), id: key } // backwards compatibility
-          if (!documentRecord.check(document)) {
+          if (!isDocumentRecord(document)) {
             node.error(`Invalid key ${key} detect. Deleting...`)
             await context.set(key)
             continue
@@ -248,6 +249,9 @@ export function Setup({
       if (code !== 0) node.error(`Worker stopped with exit code ${code}`)
     })
     return worker
+  }
+  function isDocumentRecord(document: unknown): document is z.infer<typeof documentRecord> {
+    return documentRecord.safeParse(document).success
   }
 }
 
