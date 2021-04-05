@@ -48,7 +48,9 @@ export function Setup({
 
           try {
             node.log(`Fetching ${pushshiftUrl}`)
-            response = await Promise.all([axios.get<PushShiftResponse>(pushshiftUrl), wait(600)]).then(([it, _]) => it!)
+            response = await Promise.all([axios.get<PushShiftResponse>(pushshiftUrl), wait(1000)]).then(
+              ([it, _]) => it!,
+            )
           } catch (error) {
             const message = prettyAxiosErrors(error)({
               not200: (response) => `Received ${response.status} response (expecting 200) for ${pushshiftUrl}`,
