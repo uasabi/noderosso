@@ -54,7 +54,3 @@ export type Events = ReturnType<typeof Event[keyof typeof Event]>
 export function isEvent(event: unknown): event is Events {
   return events.safeParse(event).success
 }
-
-function isString(value: unknown): value is string {
-  return {}.toString.call(value) === '[object String]'
-}

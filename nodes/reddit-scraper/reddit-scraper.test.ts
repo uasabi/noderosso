@@ -37,7 +37,6 @@ test('setup', (assert) => {
 
 test('extract replies', (assert) => {
   const replies = extractReplies(fixtureReplies)
-
   assert.deepEqual(replies, [
     {
       text:
@@ -49,10 +48,12 @@ test('extract replies', (assert) => {
           replies: [],
           score: 6,
           createdAt: '2021-01-01T18:39:16.000Z',
+          permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghqsgcu/',
         },
       ],
       score: 13,
       createdAt: '2021-01-01T17:59:23.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghqlyp9/',
     },
     {
       text:
@@ -76,14 +77,18 @@ test('extract replies', (assert) => {
                       replies: [],
                       score: 1,
                       createdAt: '2021-01-01T19:48:25.000Z',
+                      permalink:
+                        '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr3oef/',
                     },
                   ],
                   score: 2,
                   createdAt: '2021-01-01T19:41:26.000Z',
+                  permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr2l00/',
                 },
               ],
               score: 3,
               createdAt: '2021-01-01T19:38:10.000Z',
+              permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr22gt/',
             },
             {
               text:
@@ -99,10 +104,13 @@ test('extract replies', (assert) => {
                       replies: [],
                       score: 0,
                       createdAt: '2021-01-02T06:32:57.000Z',
+                      permalink:
+                        '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ght0ce1/',
                     },
                   ],
                   score: 1,
                   createdAt: '2021-01-02T02:18:04.000Z',
+                  permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghsbcix/',
                 },
                 {
                   text:
@@ -114,6 +122,8 @@ test('extract replies', (assert) => {
                       replies: [],
                       score: 0,
                       createdAt: '2021-01-02T06:34:15.000Z',
+                      permalink:
+                        '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ght0ftx/',
                     },
                     {
                       text:
@@ -124,18 +134,24 @@ test('extract replies', (assert) => {
                           replies: [],
                           score: 2,
                           createdAt: '2021-01-01T20:00:13.000Z',
+                          permalink:
+                            '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr5ibv/',
                         },
                       ],
                       score: -4,
                       createdAt: '2021-01-01T19:43:16.000Z',
+                      permalink:
+                        '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr2v1x/',
                     },
                   ],
                   score: 1,
                   createdAt: '2021-01-01T19:40:15.000Z',
+                  permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr2edw/',
                 },
               ],
               score: 6,
               createdAt: '2021-01-01T19:38:14.000Z',
+              permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr22tf/',
             },
             {
               text:
@@ -143,10 +159,12 @@ test('extract replies', (assert) => {
               replies: [],
               score: 1,
               createdAt: '2021-01-02T08:23:46.000Z',
+              permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ght7nse/',
             },
           ],
           score: 4,
           createdAt: '2021-01-01T19:15:55.000Z',
+          permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghqyef8/',
         },
         {
           text:
@@ -154,6 +172,7 @@ test('extract replies', (assert) => {
           replies: [],
           score: 2,
           createdAt: '2021-01-01T20:17:03.000Z',
+          permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr7q66/',
         },
         {
           text:
@@ -161,10 +180,12 @@ test('extract replies', (assert) => {
           replies: [],
           score: 1,
           createdAt: '2021-01-02T06:43:23.000Z',
+          permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ght14az/',
         },
       ],
       score: 21,
       createdAt: '2021-01-01T19:09:30.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghqxbic/',
     },
     {
       text:
@@ -172,6 +193,7 @@ test('extract replies', (assert) => {
       replies: [],
       score: 9,
       createdAt: '2021-01-01T20:32:06.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr9eai/',
     },
     {
       text:
@@ -182,10 +204,12 @@ test('extract replies', (assert) => {
           replies: [],
           score: 3,
           createdAt: '2021-01-01T21:12:46.000Z',
+          permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghrdyil/',
         },
       ],
       score: 7,
       createdAt: '2021-01-01T20:23:53.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr8h84/',
     },
     {
       text:
@@ -226,42 +250,58 @@ test('extract replies', (assert) => {
                                           replies: [],
                                           score: 1,
                                           createdAt: '2021-01-02T21:25:12.000Z',
+                                          permalink:
+                                            '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghv4vto/',
                                         },
                                       ],
                                       score: 1,
                                       createdAt: '2021-01-02T19:49:48.000Z',
+                                      permalink:
+                                        '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghutre1/',
                                     },
                                   ],
                                   score: 1,
                                   createdAt: '2021-01-02T19:20:48.000Z',
+                                  permalink:
+                                    '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghuqd3q/',
                                 },
                               ],
                               score: 1,
                               createdAt: '2021-01-02T12:31:27.000Z',
+                              permalink:
+                                '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghtllqx/',
                             },
                           ],
                           score: 1,
                           createdAt: '2021-01-02T06:44:32.000Z',
+                          permalink:
+                            '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ght17bl/',
                         },
                       ],
                       score: 1,
                       createdAt: '2021-01-02T04:45:11.000Z',
+                      permalink:
+                        '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghsr3xo/',
                     },
                   ],
                   score: 2,
                   createdAt: '2021-01-01T22:47:23.000Z',
+                  permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghrooi8/',
                 },
               ],
               score: 3,
               createdAt: '2021-01-01T18:59:06.000Z',
+              permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghqvnrd/',
             },
           ],
           score: 3,
           createdAt: '2021-01-01T18:48:54.000Z',
+          permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghqu2cj/',
         },
       ],
       score: 4,
       createdAt: '2021-01-01T18:46:55.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghqtqh8/',
     },
     {
       text:
@@ -269,6 +309,7 @@ test('extract replies', (assert) => {
       replies: [],
       score: 3,
       createdAt: '2021-01-01T21:51:42.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghridvb/',
     },
     {
       text: '<div class="md"><p>Remindme!</p>\n</div>',
@@ -279,16 +320,19 @@ test('extract replies', (assert) => {
           replies: [],
           score: 1,
           createdAt: '2021-01-01T19:29:13.000Z',
+          permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr0l3i/',
         },
       ],
       score: 2,
       createdAt: '2021-01-01T18:53:09.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghquq5u/',
     },
     {
       text: '<div class="md"><p>Remindme! 4 days</p>\n</div>',
       replies: [],
       score: 2,
       createdAt: '2021-01-01T19:32:47.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr16hy/',
     },
     {
       text:
@@ -296,6 +340,7 @@ test('extract replies', (assert) => {
       replies: [],
       score: 2,
       createdAt: '2021-01-01T19:33:31.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr1aw8/',
     },
     {
       text:
@@ -303,12 +348,14 @@ test('extract replies', (assert) => {
       replies: [],
       score: 2,
       createdAt: '2021-01-01T19:33:34.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr1b7u/',
     },
     {
       text: '<div class="md"><p>Nzbget would be a nice addition.</p>\n</div>',
       replies: [],
       score: 2,
       createdAt: '2021-01-01T22:37:22.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghrnkgw/',
     },
     {
       text:
@@ -320,10 +367,12 @@ test('extract replies', (assert) => {
           replies: [],
           score: 1,
           createdAt: '2021-01-02T00:38:14.000Z',
+          permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghs0n40/',
         },
       ],
       score: 2,
       createdAt: '2021-01-01T22:51:41.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghrp5bd/',
     },
     {
       text:
@@ -335,10 +384,12 @@ test('extract replies', (assert) => {
           replies: [],
           score: 1,
           createdAt: '2021-01-02T00:36:52.000Z',
+          permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghs0hsw/',
         },
       ],
       score: 2,
       createdAt: '2021-01-02T00:33:19.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghs0451/',
     },
     {
       text:
@@ -352,14 +403,17 @@ test('extract replies', (assert) => {
               replies: [],
               score: 2,
               createdAt: '2021-01-01T20:05:11.000Z',
+              permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghr6ao4/',
             },
           ],
           score: 6,
           createdAt: '2021-01-01T19:12:57.000Z',
+          permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghqxwdd/',
         },
       ],
       score: 2,
       createdAt: '2021-01-01T19:06:08.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghqwrge/',
     },
     {
       text:
@@ -371,12 +425,14 @@ test('extract replies', (assert) => {
           replies: [],
           score: 1,
           createdAt: '2021-01-02T11:31:19.000Z',
+          permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghti4jz/',
         },
         {
           text: '<div class="md"><p>Agreed.\nAn operator to deploy this is just slavery with extra steps.</p>\n</div>',
           replies: [],
           score: 0,
           createdAt: '2021-01-02T08:47:05.000Z',
+          permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ght90ax/',
         },
         {
           text:
@@ -400,26 +456,34 @@ test('extract replies', (assert) => {
                           replies: [],
                           score: 0,
                           createdAt: '2021-01-02T15:24:57.000Z',
+                          permalink:
+                            '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghtzh4h/',
                         },
                       ],
                       score: 2,
                       createdAt: '2021-01-02T13:22:01.000Z',
+                      permalink:
+                        '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghtozew/',
                     },
                   ],
                   score: 0,
                   createdAt: '2021-01-02T13:19:45.000Z',
+                  permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghtothb/',
                 },
               ],
               score: 3,
               createdAt: '2021-01-02T13:18:12.000Z',
+              permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghtopef/',
             },
           ],
           score: -1,
           createdAt: '2021-01-02T09:53:08.000Z',
+          permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghtcpl9/',
         },
       ],
       score: 3,
       createdAt: '2021-01-02T04:38:44.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghsqgg7/',
     },
     {
       text:
@@ -427,6 +491,7 @@ test('extract replies', (assert) => {
       replies: [],
       score: 1,
       createdAt: '2021-01-02T01:41:45.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghs7dwt/',
     },
     {
       text:
@@ -434,12 +499,14 @@ test('extract replies', (assert) => {
       replies: [],
       score: 1,
       createdAt: '2021-01-02T11:56:58.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghtjkh9/',
     },
     {
       text: '<div class="md"><p>Ipvanish, buy one account, unlimited concurrent connections.</p>\n</div>',
       replies: [],
       score: 1,
       createdAt: '2021-01-01T22:38:30.000Z',
+      permalink: '/r/kubernetes/comments/koedh7/k8smediaserveroperator_your_allinone_resource_for/ghrnoxd/',
     },
   ])
   assert.end()
@@ -447,6 +514,7 @@ test('extract replies', (assert) => {
 
 test('Single article', async (assert) => {
   const post = await fetchPost(`http://localhost:${port}/article`)
+
   assert.deepEqual(post, {
     type: 'link',
     link: 'https://www.openfaas.com/blog/kubernetes-webhooks-made-easy-with-openfaas/',
@@ -458,6 +526,7 @@ test('Single article', async (assert) => {
         replies: [],
         score: 2,
         createdAt: '2021-01-23T12:17:01.000Z',
+        permalink: '/r/kubernetes/comments/l3b3f0/kubernetes_webhooks_made_easy_with_openfaas/gkctjaw/',
       },
     ],
     permalink: 'http://localhost:54321/article',
@@ -492,18 +561,23 @@ test('Self text', async (assert) => {
                     replies: [],
                     score: 2,
                     createdAt: '2021-01-24T15:08:43.000Z',
+                    permalink:
+                      '/r/kubernetes/comments/l3jg5f/kubeswitch_v020_kubernetes_context_and_namespace/gkkx0y2/',
                   },
                 ],
                 score: 1,
                 createdAt: '2021-01-24T11:22:46.000Z',
+                permalink: '/r/kubernetes/comments/l3jg5f/kubeswitch_v020_kubernetes_context_and_namespace/gkjd0eu/',
               },
             ],
             score: 1,
             createdAt: '2021-01-23T23:38:55.000Z',
+            permalink: '/r/kubernetes/comments/l3jg5f/kubeswitch_v020_kubernetes_context_and_namespace/gkgrs20/',
           },
         ],
         score: 2,
         createdAt: '2021-01-23T23:36:05.000Z',
+        permalink: '/r/kubernetes/comments/l3jg5f/kubeswitch_v020_kubernetes_context_and_namespace/gkgrd7z/',
       },
     ],
     permalink: 'http://localhost:54321/self',

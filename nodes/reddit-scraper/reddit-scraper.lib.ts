@@ -208,6 +208,7 @@ export function extractReplies(payload: RedditNestable<RedditResponse>[]): Reddi
   function extract(obj: RedditNestable<RedditResponse>): RedditReply {
     const replies = obj?.data?.replies
     const text = obj?.data?.body_html ?? ''
+    const permalink = obj?.data?.permalink
     const createdAt = new Date(obj.data.created_utc * 1000)
     if (isNestable(replies)) {
       return {
@@ -215,6 +216,7 @@ export function extractReplies(payload: RedditNestable<RedditResponse>[]): Reddi
         replies: replies.data.children.map((it) => extract(it as any)),
         score: obj.data.score,
         createdAt: isValidDate(createdAt) ? createdAt.toISOString() : new Date().toISOString(),
+        permalink,
       }
     }
     return {
@@ -222,6 +224,7 @@ export function extractReplies(payload: RedditNestable<RedditResponse>[]): Reddi
       replies: [],
       score: obj.data.score,
       createdAt: isValidDate(createdAt) ? createdAt.toISOString() : new Date().toISOString(),
+      permalink,
     }
   }
 }
@@ -302,6 +305,7 @@ interface RedditReply {
   score: number
   replies: RedditReply[]
   createdAt: string
+  permalink?: string
 }
 
 function isValidDate(date: unknown): date is Date {
