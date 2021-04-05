@@ -36,6 +36,7 @@ export function Setup({
             size: 500,
             before: `${page}d`,
             after: `${page + maxDaysPerPage}d`,
+            ...(isString(action.payload.title) ? { title: action.payload.title } : {}),
           })
 
           const pushshiftUrl = `${pushshiftBaseUrl}/reddit/search/submission/?${args}&fields=${[
