@@ -54,6 +54,7 @@ module.exports = function (RED: Red) {
       '    <p class="f2 tc">OR</p>',
       '    <p class="f5 mb0">Copy and paste csv text here.</p>',
       `    <textarea id="csv-textarea" rows="5" name="csv" class="mv3 input-reset ba w-100 br2 bg-white f6 pv2 ph3 b--silver">${csv}</textarea>`,
+      `    <p><label for='total-variations' class="f4 b">Total variations</label><input type='number' class="input-reset ba w3 br2 bg-white f4 pv2 ph3 b--silver border-box ml3" name="totalVariations" value="2"/></p>`,
       '    <input type="submit" id="submit" name="submit" value="Submit" class="input-reset bn pv2 bg-navy white db w-100 ttu b f4 br1"/>',
       '  </form>',
       '</div>',
@@ -82,7 +83,7 @@ module.exports = function (RED: Red) {
     ].join('')
   }
 
-  RED.httpAdmin.post(`/tweet-importer/:id`, async function (req: Request, res: Response) {
+  RED.httpAdmin.post(`/tweet-importer/:id`, async function (req: Request, res: Response): Promise<void> {
     const nodeId = req.params.id ?? ''
     const node = RED.nodes.getNode<Node>(nodeId)
 
@@ -90,54 +91,55 @@ module.exports = function (RED: Red) {
       return res.redirect(`/admin/tweet-importer/${nodeId}`)
     }
 
-    if (hasOwnProperty(req.body, 'csv')) {
-      const csvText = req.body.csv
+    const csvText = req.body.csv
+    const totalVariations = isNumber(parseInt(req.body.totalVariations ?? ''))
+      ? Math.min(parseInt(req.body.totalVariations ?? ''), 8)
+      : 2
 
-      if (!isString(csvText)) {
-        return res.redirect(`/admin/tweet-importer/${nodeId}`)
-      }
+    if (!isString(csvText)) {
+      return res.redirect(`/admin/tweet-importer/${nodeId}`)
+    }
 
-      const parsedTweets = csv2Tweets(csvText)
-      const allTweets = parsedTweets.flatMap((it) => it)
-      if (allTweets.some((it) => it instanceof Error)) {
-        res.send(
-          renderTemplate({ nodeId, csv: csvText, errors: allTweets.filter((it) => it instanceof Error) as Error[] }),
-        )
-        return
-      }
+    const parsedTweets = csv2Tweets({ csv: csvText, totalVariations })
 
-      node.receive({
-        topic: 'IMPORT.V1',
-        payload: {
-          csv: csvText,
-        },
-      })
+    if (parsedTweets instanceof Error) {
+      res.send(renderTemplate({ nodeId, csv: csvText, errors: [parsedTweets] }))
+      return
+    }
 
-      const images = (allTweets as Tweet[])
-        .flatMap((it) => it.images)
-        .map((it) => it.trim())
-        .filter((it) => it.length > 0)
-
+    const allTweets = Object.values(parsedTweets).flatMap((it) => it)
+    if (allTweets.some((it) => it instanceof Error)) {
       res.send(
-        renderTemplate({
-          nodeId,
-          csv: '',
-          success: `Imported ${parsedTweets.length} tweets and ${images.length} images!`,
-        }),
+        renderTemplate({ nodeId, csv: csvText, errors: allTweets.filter((it) => it instanceof Error) as Error[] }),
       )
       return
     }
 
-    res.send(renderTemplate({ nodeId, csv: '' }))
+    node.receive({
+      topic: 'IMPORT.V1',
+      payload: {
+        csv: csvText,
+        totalVariations,
+      },
+    })
+
+    const images = (allTweets as Tweet[])
+      .flatMap((it) => it.images)
+      .map((it) => it.trim())
+      .filter((it) => it.length > 0)
+
+    res.send(
+      renderTemplate({
+        nodeId,
+        csv: '',
+        success: `Imported ${allTweets.length} tweets and ${images.length} images!`,
+      }),
+    )
   })
 }
 
 function isString(value: unknown): value is string {
   return {}.toString.call(value) === '[object String]'
-}
-
-function hasOwnProperty<X extends {}, Y extends PropertyKey>(obj: X, prop: Y): obj is X & Record<Y, unknown> {
-  return obj.hasOwnProperty(prop)
 }
 
 function readCsvFile() {
@@ -174,4 +176,8 @@ function readCsvFile() {
     }
     reader.readAsText(csvfile)
   })
+}
+
+function isNumber(value: unknown): value is number {
+  return {}.toString.call(value) === '[object Number]' && !isNaN(value as number)
 }

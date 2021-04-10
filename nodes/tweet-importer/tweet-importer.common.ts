@@ -8,6 +8,7 @@ const Schema = {
     topic: z.literal('IMPORT.V1'),
     payload: z.object({
       csv: z.string().nonempty(),
+      totalVariations: z.number().default(2),
     }),
   }),
   tweet: z.object({

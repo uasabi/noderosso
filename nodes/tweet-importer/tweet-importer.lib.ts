@@ -10,11 +10,20 @@ export function Setup({ node }: { node: Node }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
     switch (action.topic) {
       case 'IMPORT.V1': {
-        const csv = action.payload.csv
         try {
-          const templatedTweets = csv2Tweets(csv)
+          const templatedTweets = csv2Tweets({
+            csv: action.payload.csv,
+            totalVariations: Math.min(action.payload.totalVariations, 8),
+          })
 
-          templatedTweets.forEach((variation) => {
+          if (templatedTweets instanceof Error) {
+            const message = `Error while parsing csv \n[${templatedTweets.name}]: ${templatedTweets.message}`
+            node.error(message)
+            node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
+            return done()
+          }
+
+          Object.values(templatedTweets).forEach((variation) => {
             variation.forEach((tweet) => {
               if (tweet instanceof Error) {
                 node.error(`Parse error [${tweet.name}]: ${tweet.message}`)
@@ -68,13 +77,6 @@ function shuffle<T>(arr: T[]): T[] {
   return arr
 }
 
-class URLParseError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'URLParseError'
-  }
-}
-
 class TweetParseError extends Error {
   constructor(message: string) {
     super(message)
@@ -89,8 +91,16 @@ class CSVParseError extends Error {
   }
 }
 
-export function csv2Tweets(csv: string): Array<Tweet | TweetParseError | CSVParseError>[] {
-  let parsedCsv: Array<ParsedTweet | TweetParseError | CSVParseError> = []
+export function csv2Tweets({
+  csv,
+  CTAs = ['Read on:', 'Read more:', 'Read on', 'Read more', 'More', 'More:', '👉', '→'],
+  totalVariations = 2,
+}: {
+  csv: string
+  totalVariations?: number
+  CTAs?: string[]
+}): Record<string, Array<Tweet | TweetParseError>> | CSVParseError {
+  let parsedCsv: Array<Partial<ParsedTweet>> = []
 
   try {
     parsedCsv = parse(csv, {
@@ -99,14 +109,10 @@ export function csv2Tweets(csv: string): Array<Tweet | TweetParseError | CSVPars
       ignore_last_delimiters: true,
     })
   } catch (error) {
-    parsedCsv = [new CSVParseError(inspect(error))]
+    return new CSVParseError(inspect(error))
   }
 
   const firstRow = parsedCsv[0]
-
-  if (firstRow instanceof CSVParseError) {
-    return [parsedCsv] as [[CSVParseError]]
-  }
 
   const literal = (value: string) =>
     z
@@ -116,7 +122,7 @@ export function csv2Tweets(csv: string): Array<Tweet | TweetParseError | CSVPars
 
   const firstRowSchema = z.object({
     link: literal('link'),
-    ldescription: literal('description'),
+    description: literal('description'),
     image_1: literal('image_1'),
     image_2: literal('image_2'),
     total_sources: literal('total_sources'),
@@ -128,12 +134,8 @@ export function csv2Tweets(csv: string): Array<Tweet | TweetParseError | CSVPars
     parsedCsv = parsedCsv.slice(1)
   }
 
-  const tweets: Array<{ variation1: TweetParseError | Tweet | undefined; variation2: Tweet | undefined }> = parsedCsv
+  const tweets: Array<TweetParseError | Tweet | undefined>[] = parsedCsv
     .map((it, index) => {
-      if (it instanceof Error) {
-        return it
-      }
-
       const validate = TweetSchema.safeParse({
         link: it.link,
         description: it.description,
@@ -189,10 +191,9 @@ export function csv2Tweets(csv: string): Array<Tweet | TweetParseError | CSVPars
     })
     .map((it) => {
       if (it instanceof Error) {
-        return { variation1: it, variation2: undefined }
+        return [it]
       }
 
-      const CTAs = ['Read on:', 'Read more:', 'Read on', 'Read more', 'More', 'More:', '👉', '→']
       const candidates = CTAs.map((cta) => {
         const content = `${it.description}\n\n${cta} ${it.link}`
         return { ...it, content, length: collapseLinks(content).length }
@@ -212,21 +213,25 @@ export function csv2Tweets(csv: string): Array<Tweet | TweetParseError | CSVPars
 
       const shuffledCandidates = shuffle(candidates) as Tweet[]
 
-      return { variation1: shuffledCandidates[0], variation2: shuffledCandidates[1] }
+      return shuffledCandidates.slice(0, Math.max(totalVariations, 1))
     })
 
-  const a = tweets.reduce(
-    (acc, { variation1, variation2 }) => {
-      return {
-        variation1: [...acc.variation1, ...(variation1 ? [variation1] : [])],
-        variation2: [...acc.variation2, ...(variation2 ? [variation2] : [])],
+  const variations = tweets.reduce((acc, variations) => {
+    for (let i = 0; i < Math.max(totalVariations, 1); i++) {
+      const variation = variations[i]
+      if (!variation) {
+        continue
       }
-    },
-    { variation1: [], variation2: [] } as {
-      variation1: Array<Tweet | TweetParseError>
-      variation2: Array<Tweet | TweetParseError>
-    },
-  )
 
-  return [a.variation1, a.variation2]
+      if (!Array.isArray(acc[`variation${i + 1}`])) {
+        acc[`variation${i + 1}`] = []
+      }
+
+      acc[`variation${i + 1}`]!.push(variation)
+    }
+
+    return acc
+  }, {} as Record<string, Array<Tweet | TweetParseError>>)
+
+  return variations
 }
