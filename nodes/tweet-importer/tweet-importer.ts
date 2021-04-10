@@ -98,9 +98,10 @@ module.exports = function (RED: Red) {
       }
 
       const parsedTweets = csv2Tweets(csvText)
-      if (parsedTweets.some((it) => it instanceof Error)) {
+      const allTweets = parsedTweets.flatMap((it) => it)
+      if (allTweets.some((it) => it instanceof Error)) {
         res.send(
-          renderTemplate({ nodeId, csv: csvText, errors: parsedTweets.filter((it) => it instanceof Error) as Error[] }),
+          renderTemplate({ nodeId, csv: csvText, errors: allTweets.filter((it) => it instanceof Error) as Error[] }),
         )
         return
       }
@@ -112,7 +113,7 @@ module.exports = function (RED: Red) {
         },
       })
 
-      const images = (parsedTweets as Tweet[])
+      const images = (allTweets as Tweet[])
         .flatMap((it) => it.images)
         .map((it) => it.trim())
         .filter((it) => it.length > 0)

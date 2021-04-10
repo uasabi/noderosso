@@ -14,7 +14,11 @@ test('it should throw error', async (assert) => {
   ]
 
   cases.forEach((it) => {
-    assert.ok(csv2Tweets(it).some((it) => it instanceof Error))
+    assert.ok(
+      csv2Tweets(it)
+        .flatMap((it) => it)
+        .some((it) => it instanceof Error),
+    )
   })
 
   assert.end()

@@ -1,3 +1,4 @@
+import { URL } from 'url'
 import * as z from 'zod'
 
 const Message = z.object({ _msgid: z.string() })
@@ -14,21 +15,77 @@ const Schema = {
     payload: z.object({
       text: z.string().nonempty(),
       images: z.string().array(),
+      categories: z.array(z.string().nonempty()),
     }),
   }),
 }
 
+function formatOptionalUrl(value: string | undefined): string | undefined {
+  if (!value) {
+    return value
+  }
+
+  try {
+    return new URL(value).toString()
+  } catch {
+    return undefined
+  }
+}
+
+function formatUrl(value: string): string {
+  try {
+    return new URL(value).toString()
+  } catch {
+    return ''
+  }
+}
+
+function supportedImages(value: string | undefined): boolean {
+  if (!value) {
+    return true
+  }
+
+  return ['jpg', 'png', 'gif', 'jpeg'].some((it) => value.endsWith(it))
+}
+
 export const TweetSchema = z.object({
-  link: z.string().url().nonempty(),
-  description: z.string().nonempty(),
-  image_1: z.string().nullable().optional(),
-  image_2: z.string().nullable().optional(),
+  link: z
+    .string()
+    .nonempty()
+    .transform(formatUrl)
+    .refine((it) => it.length > 0),
+  description: z
+    .string()
+    .nonempty()
+    .transform((it) =>
+      it
+        .replace(/\u2028/gi, '\n')
+        .replace(/’/gi, "'")
+        .trim(),
+    ),
+  image_1: z.string().optional().transform(formatOptionalUrl).refine(supportedImages),
+  image_2: z.string().optional().transform(formatOptionalUrl).refine(supportedImages),
+  categories: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .transform((it) => {
+      if (Array.isArray(it)) {
+        return it.map((it) => it.trim().toLowerCase()).filter((it) => it.length > 0)
+      }
+
+      if (!it || it?.trim().length === 0) {
+        return undefined
+      }
+
+      return it.split(',').map((it) => it.trim().toLowerCase())
+    }),
 })
 
 export type ParsedTweet = z.infer<typeof TweetSchema>
 export type Tweet = {
   text: string
   images: string[]
+  categories: string[]
 }
 
 export const actions = Schema.import
