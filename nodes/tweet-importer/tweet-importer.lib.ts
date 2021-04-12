@@ -23,15 +23,14 @@ export function Setup({ node }: { node: Node }) {
             return done()
           }
 
-          Object.values(templatedTweets).forEach((variation) => {
-            variation.forEach((tweet) => {
-              if (tweet instanceof Error) {
-                node.error(`Parse error [${tweet.name}]: ${tweet.message}`)
-              } else {
-                send(Event.tweet(tweet))
-              }
-            })
+          templatedTweets.forEach((tweet) => {
+            if (tweet instanceof Error) {
+              node.error(`Parse error [${tweet.name}]: ${tweet.message}`)
+            } else {
+              send(Event.tweet(tweet))
+            }
           })
+
           node.status({ fill: 'green', shape: 'dot', text: `Imported ${time()}` })
         } catch (error) {
           const message = `Error while parsing csv \n${inspect(error)}`
@@ -99,8 +98,12 @@ export function csv2Tweets({
   csv: string
   totalVariations?: number
   CTAs?: string[]
-}): Record<string, Array<Tweet | TweetParseError>> | CSVParseError {
+}): Array<Tweet | TweetParseError> | CSVParseError {
   let parsedCsv: Array<Partial<ParsedTweet>> = []
+
+  if (totalVariations < 1) {
+    totalVariations = 1
+  }
 
   try {
     parsedCsv = parse(csv, {
@@ -134,7 +137,7 @@ export function csv2Tweets({
     parsedCsv = parsedCsv.slice(1)
   }
 
-  const tweets: Array<TweetParseError | Tweet | undefined>[] = parsedCsv
+  const tweets = parsedCsv
     .map((it, index) => {
       const validate = TweetSchema.safeParse({
         link: it.link,
@@ -191,10 +194,10 @@ export function csv2Tweets({
     })
     .map((it) => {
       if (it instanceof Error) {
-        return [it]
+        return it
       }
 
-      const candidates = CTAs.map((cta) => {
+      let candidates = CTAs.map((cta) => {
         const content = `${it.description}\n\n${cta} ${it.link}`
         return { ...it, content, length: collapseLinks(content).length }
       })
@@ -203,35 +206,17 @@ export function csv2Tweets({
           return {
             text: it.content,
             images: [it.image_1, it.image_2].filter((it) => !!it) as string[],
-            categories: it.categories ?? [],
           }
         })
 
       if (candidates.length === 0) {
-        throw `The tweet ${it.description} is too long! Cannot add the CTA.`
+        return new TweetParseError(`The tweet ${it.description} is too long! Cannot add the CTA.`)
       }
 
-      const shuffledCandidates = shuffle(candidates) as Tweet[]
+      const shuffledCandidates = shuffle(candidates)
 
-      return shuffledCandidates.slice(0, Math.max(totalVariations, 1))
+      return { variations: shuffledCandidates.slice(0, totalVariations), categories: it.categories ?? [] }
     })
 
-  const variations = tweets.reduce((acc, variations) => {
-    for (let i = 0; i < Math.max(totalVariations, 1); i++) {
-      const variation = variations[i]
-      if (!variation) {
-        continue
-      }
-
-      if (!Array.isArray(acc[`variation${i + 1}`])) {
-        acc[`variation${i + 1}`] = []
-      }
-
-      acc[`variation${i + 1}`]!.push(variation)
-    }
-
-    return acc
-  }, {} as Record<string, Array<Tweet | TweetParseError>>)
-
-  return variations
+  return tweets
 }

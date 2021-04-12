@@ -111,7 +111,7 @@ export function Setup({
               const id = generateId()
               return {
                 ...acc,
-                id: {
+                [id]: {
                   type: 'unscheduled-variation' as const,
                   id,
                   text: it.text,

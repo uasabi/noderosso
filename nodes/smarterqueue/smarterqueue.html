@@ -4,7 +4,7 @@
     color: '#a6bbcf',
     defaults: {
       name: { value: '' },
-      categories: { value: '' },
+      slots: { value: '' },
       failsafe: { value: '' },
     },
     inputs: 1,
@@ -18,9 +18,10 @@
         .css('min-height', '150px')
         .css('min-width', '450px')
         .editableList({
+          sortable: true,
+          removable: true,
           header: $('<div>').text('Schedule'),
           addButton: 'Add a slot',
-          removable: true,
           addItem: function (row, index, data) {
             $(row).append($('<input type="text" name="slot[]"/>').val(isString(data) ? data : ''))
             function isString(value) {
@@ -31,13 +32,6 @@
       const slots = ($('#node-input-slots').val() + '')
         .split('|')
         .filter((it) => it.length > 0)
-        .sort((a, b) => {
-          return getValue(a) - getValue(b)
-
-          function getValue(date) {
-            return date.getDay() * 24 * 60 + date.getHours() * 60 + date.getMinutes()
-          }
-        })
       $('#schedule').editableList('addItems', slots)
     },
     oneditsave: function () {

@@ -14,8 +14,14 @@ const Schema = {
   tweet: z.object({
     topic: z.literal('TWEET.V1'),
     payload: z.object({
-      text: z.string().nonempty(),
-      images: z.string().array(),
+      variations: z
+        .array(
+          z.object({
+            text: z.string().nonempty(),
+            images: z.array(z.string().url()).max(4),
+          }),
+        )
+        .min(1),
       categories: z.array(z.string().nonempty()),
     }),
   }),
@@ -84,8 +90,10 @@ export const TweetSchema = z.object({
 
 export type ParsedTweet = z.infer<typeof TweetSchema>
 export type Tweet = {
-  text: string
-  images: string[]
+  variations: {
+    text: string
+    images: string[]
+  }[]
   categories: string[]
 }
 

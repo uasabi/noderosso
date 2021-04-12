@@ -107,10 +107,9 @@ module.exports = function (RED: Red) {
       return
     }
 
-    const allTweets = Object.values(parsedTweets).flatMap((it) => it)
-    if (allTweets.some((it) => it instanceof Error)) {
+    if (parsedTweets.some((it) => it instanceof Error)) {
       res.send(
-        renderTemplate({ nodeId, csv: csvText, errors: allTweets.filter((it) => it instanceof Error) as Error[] }),
+        renderTemplate({ nodeId, csv: csvText, errors: parsedTweets.filter((it) => it instanceof Error) as Error[] }),
       )
       return
     }
@@ -123,7 +122,9 @@ module.exports = function (RED: Red) {
       },
     })
 
-    const images = (allTweets as Tweet[])
+    const allVariations = (parsedTweets as Tweet[]).flatMap((it) => it.variations)
+
+    const images = allVariations
       .flatMap((it) => it.images)
       .map((it) => it.trim())
       .filter((it) => it.length > 0)
@@ -132,7 +133,7 @@ module.exports = function (RED: Red) {
       renderTemplate({
         nodeId,
         csv: '',
-        success: `Imported ${allTweets.length} tweets and ${images.length} images!`,
+        success: `Imported ${parsedTweets.length} tweets, ${allVariations.length} variations and ${images.length} images!`,
       }),
     )
   })

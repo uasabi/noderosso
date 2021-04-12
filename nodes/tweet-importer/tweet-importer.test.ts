@@ -1,4 +1,5 @@
 import test from 'tape'
+import { Tweet } from './tweet-importer.common'
 import { csv2Tweets } from './tweet-importer.lib'
 
 test('it should throw error', async (assert) => {
@@ -18,8 +19,9 @@ test('it should parse and ignore the first line', async (assert) => {
     return
   }
 
-  assert.equal(Object.values(tweets).length, 2)
-  assert.ok(Object.values(tweets)[0]?.every((it) => !(it instanceof Error)))
+  assert.equal(tweets.length, 1)
+  assert.equal((tweets[0] as Tweet | undefined)?.variations.length, 2)
+  assert.ok(tweets.every((it) => !(it instanceof Error)))
   assert.end()
 })
 
@@ -35,7 +37,7 @@ test('it should ignore broken tweets', async (assert) => {
     return
   }
 
-  assert.equal(Object.values(tweets).length, 1)
-  assert.ok(Object.values(tweets)[0]?.some((it) => it instanceof Error))
+  assert.equal(tweets.length, 1)
+  assert.ok(tweets.some((it) => it instanceof Error))
   assert.end()
 })
