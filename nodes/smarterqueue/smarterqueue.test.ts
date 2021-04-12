@@ -20,6 +20,8 @@ test('it should get the next slot next week', (assert) => {
 })
 
 test('it should queue', async (assert) => {
+  assert.plan(13)
+
   const context = new MockContext()
   const input = Setup({
     node: { log: noop, error: noop, warn: noop, status: noop } as any,
@@ -74,6 +76,8 @@ test('it should queue', async (assert) => {
 })
 
 test('it should publish', async (assert) => {
+  assert.plan(6)
+
   const context = new MockContext()
   const input = Setup({
     node: { log: noop, error: noop, warn: noop, status: noop } as any,
@@ -118,17 +122,17 @@ test('it should publish', async (assert) => {
       payload: Date.now(),
     },
     (event) => {
-      assert.equal(event.payload.text, '3')
+      assert.equal(event.payload.text, '2')
       assert.equal(event.payload.id, `${tweet.id}#${Object.keys(tweet.variations)[1]}`)
       assert.equal(event.payload.images.join(','), 'link3')
     },
     () => assert.pass(),
   )
-
-  assert.end()
 })
 
 test('it should reschedule all', async (assert) => {
+  assert.plan(6)
+
   const context = new MockContext()
   const input = Setup({
     node: { log: noop, error: noop, warn: noop, status: noop } as any,
@@ -155,7 +159,7 @@ test('it should reschedule all', async (assert) => {
     await input(
       { _msgid: '1', topic: 'QUEUE.V1', payload: item },
       () => assert.fail(),
-      () => assert.pass(),
+      () => assert.pass('queue'),
     )
   }
 
@@ -174,7 +178,7 @@ test('it should reschedule all', async (assert) => {
       topic: 'RESCHEDULE_ALL.V1',
     },
     () => assert.fail(),
-    () => assert.pass(),
+    () => assert.pass('reschedule'),
   )
 
   const currentSlots = await Promise.all(keys.map((it) => getSlot(it)))
@@ -185,6 +189,8 @@ test('it should reschedule all', async (assert) => {
 })
 
 test('it should gc', async (assert) => {
+  assert.plan(4)
+
   const context = new MockContext()
   const input = Setup({
     node: { log: noop, error: noop, warn: noop, status: noop } as any,

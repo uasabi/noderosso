@@ -98,7 +98,7 @@ export function Setup({
         await context.set<Tweet>(id, {
           id,
           variations: {
-            [firstVariationId]: {
+            [firstVariationId]: <ScheduledVariation>{
               type: 'scheduled-variation' as const,
               id: firstVariationId,
               text: firstVariation.text,
@@ -111,7 +111,7 @@ export function Setup({
               const id = generateId()
               return {
                 ...acc,
-                [id]: {
+                [id]: <UnscheduledVariation>{
                   type: 'unscheduled-variation' as const,
                   id,
                   text: it.text,
@@ -180,7 +180,7 @@ export function Setup({
         }
 
         const nextScheduleTime = getNextSlot((await scheduler.getLastScheduledTime()) ?? newDate(), slots)
-        const nextVariation = Object.values(newTweet.variations).find((it) => it.type !== 'unscheduled-variation')
+        const nextVariation = Object.values(newTweet.variations).find((it) => it.type === 'unscheduled-variation')
 
         if (!nextVariation) {
           node.error(
@@ -295,7 +295,7 @@ export function Setup({
           }
 
           for (const variation of scheduledVariations) {
-            if (new Date(variation.scheduleAt).valueOf() > action.payload) {
+            if (action.payload > new Date(variation.scheduleAt).valueOf()) {
               if (counter > circuitBreakerMaxEmit) {
                 node.warn(`Already published too many tweets. Shortcircuit enganged.`)
               } else {
