@@ -6,9 +6,10 @@ import { asyncContext } from '../context'
 import { parseDate } from 'chrono-node'
 import humanInterval from 'human-interval'
 import { format, startOfWeek } from 'date-fns'
+import { urlencoded, json, Request, Response } from 'express'
 
 module.exports = function (RED: Red) {
-  function MyFirstNode(this: Node, config: NodeProperties & { slots?: string; failsafe?: string }) {
+  function SmarterQueue(this: Node, config: NodeProperties & { slots?: string; failsafe?: string }) {
     RED.nodes.createNode(this, config)
     const node = this
     const context = asyncContext(node.context())
@@ -58,7 +59,24 @@ module.exports = function (RED: Red) {
       liftAction: (action: any) => upgradeAction(action, node.warn),
     })
   }
-  RED.nodes.registerType('smarterqueue', MyFirstNode)
+  RED.nodes.registerType('smarterqueue', SmarterQueue)
+
+  RED.httpAdmin.post(`/smarter-queue/:id/parse-dates`, json(), urlencoded({ extended: true }), async function (
+    req: Request,
+    res: Response,
+  ) {
+    const dates = req.body.dates
+    if (!Array.isArray(dates)) {
+      res.json({ dates: [] })
+      return
+    }
+    const parsedDates = dates.reduce((acc, it) => {
+      const parsedDate = parseDate(it)
+      return parsedDate ? [...acc, format(parsedDate, `cccc 'at' HH:mm`)] : acc
+    }, [] as string[])
+
+    res.json({ dates: parsedDates })
+  })
 }
 
 function isString(value: unknown): value is string {

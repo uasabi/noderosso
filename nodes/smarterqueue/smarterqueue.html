@@ -32,7 +32,10 @@
       const slots = ($('#node-input-slots').val() + '')
         .split('|')
         .filter((it) => it.length > 0)
-      $('#schedule').editableList('addItems', slots)
+
+      $.post(`smarter-queue/${this.id}/parse-dates`, { dates: slots }).then(({ dates }) => {
+        $('#schedule').editableList('addItems', dates)
+      })
     },
     oneditsave: function () {
       const slots = $('[name="slot[]"]')
