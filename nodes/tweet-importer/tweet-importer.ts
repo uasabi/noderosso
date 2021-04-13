@@ -5,16 +5,30 @@ import { WorkerNode } from '../worker-node'
 import { Request, Response } from 'express'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { v2 as cloudinary } from 'cloudinary'
 
 const tachyonsCss = readFileSync(join(__dirname, './tachyons.min.4.12.0.css'))
 
 module.exports = function (RED: Red) {
-  function TweetImporter(this: Node, config: NodeProperties) {
+  function TweetImporter(this: Node, config: NodeProperties & { cloudinaryName: string; cloudinaryApiKey: string }) {
     RED.nodes.createNode(this, config)
     const node = this
+    const credentials = (this as any).credentials
+
+    cloudinary.config({
+      cloud_name: config.cloudinaryName,
+      api_key: config.cloudinaryApiKey,
+      api_secret: credentials.cloudinaryApiSecret,
+    })
+
+    console.log({
+      cloud_name: config.cloudinaryName,
+      api_key: config.cloudinaryApiKey,
+      api_secret: credentials.cloudinaryApiSecret,
+    })
 
     WorkerNode({
-      fn: Setup({ node }),
+      fn: Setup({ node, cloudinary }),
       isAction,
       isEvent,
       node,
@@ -22,7 +36,11 @@ module.exports = function (RED: Red) {
     })
   }
 
-  RED.nodes.registerType('tweet-importer', TweetImporter)
+  RED.nodes.registerType('tweet-importer', TweetImporter, {
+    credentials: {
+      cloudinaryApiSecret: { type: 'password' },
+    },
+  })
 
   RED.httpAdmin.get(`/tweet-importer/:id`, async function (req: Request, res: Response) {
     const nodeId = req.params.id

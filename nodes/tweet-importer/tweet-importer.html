@@ -4,6 +4,11 @@
     color: '#a6bbcf',
     defaults: {
       name: { value: '' },
+      cloudinaryName: { value: '', required: true },
+      cloudinaryApiKey: { value: '', required: true },
+    },
+    credentials: {
+      cloudinaryApiSecret: { type: 'password', required: true },
     },
     inputs: 0,
     outputs: 1,
@@ -19,8 +24,20 @@
 
 <script type="text/html" data-template-name="tweet-importer">
   <div class="form-row">
-      <label for="node-input-name"><i class="icon-tag"></i> Name</label>
-      <input type="text" id="node-input-name" placeholder="Name">
+    <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-cloudinaryName"><i class="icon-tag"></i> Cloudinary name</label>
+    <input type="text" id="node-input-cloudinaryName">
+  </div>
+  <div class="form-row">
+    <label for="node-input-cloudinaryApiKey"><i class="icon-tag"></i> Cloudinary API Key</label>
+    <input type="text" id="node-input-cloudinaryApiKey">
+  </div>
+  <div class="form-row">
+    <label for="node-input-cloudinaryApiSecret"><i class="icon-tag"></i> Cloudinary API Secret</label>
+    <input type="password" id="node-input-cloudinaryApiSecret">
   </div>
   <div class="form-row">
     <a href="#" target="_blank" id="tweet-importer-admin" class="ui-button ui-corner-all ui-widget primary">Click here to open the tweet import interface</a>

@@ -3,10 +3,11 @@ import { Actions, Events, Event, TweetSchema, ParsedTweet, Tweet } from './tweet
 import { inspect } from 'util'
 import parse from 'csv-parse/lib/sync'
 import * as z from 'zod'
+import { v2 as Cloudinary } from 'cloudinary'
 
 const LINK_REGEX = /https?:\/\/\S+[^.]\.\w{2,}\/?[\w|\/~-]+/g
 
-export function Setup({ node }: { node: Node }) {
+export function Setup({ node, cloudinary }: { node: Node; cloudinary: typeof Cloudinary }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
     switch (action.topic) {
       case 'IMPORT.V1': {
@@ -23,13 +24,29 @@ export function Setup({ node }: { node: Node }) {
             return done()
           }
 
-          templatedTweets.forEach((tweet) => {
+          for (const tweet of templatedTweets) {
             if (tweet instanceof Error) {
               node.error(`Parse error [${tweet.name}]: ${tweet.message}`)
             } else {
-              send(Event.tweet(tweet))
+              const parsedTweet = {
+                ...tweet,
+                variations: tweet.variations.map((it) => {
+                  return {
+                    ...it,
+                    images: it.images
+                      .map((it) => {
+                        if (it.endsWith('gif')) {
+                          return cloudinary.url(it, { type: 'fetch' })
+                        }
+                        return cloudinary.url(it, { type: 'fetch', format: 'png' })
+                      })
+                      .filter((it) => !!it),
+                  }
+                }),
+              }
+              send(Event.tweet(parsedTweet))
             }
-          })
+          }
 
           node.status({ fill: 'green', shape: 'dot', text: `Imported ${time()}` })
         } catch (error) {
@@ -219,4 +236,8 @@ export function csv2Tweets({
     })
 
   return tweets
+}
+
+function onlyUnique(value: string, index: number, self: string[]) {
+  return self.indexOf(value) === index
 }

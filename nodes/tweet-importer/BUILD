@@ -16,6 +16,7 @@ node(
         "//types",
         "@npm//@types/express",
         "@npm//@types/node",
+        "@npm//cloudinary",
         "@npm//csv-parse",
         "@npm//express",
         "@npm//node-red",

@@ -17,6 +17,7 @@
     "@mozilla/readability": "^0.4.1",
     "axios": "^0.21.1",
     "chrono-node": "^2.1.9",
+    "cloudinary": "^1.25.1",
     "date-fns": "^2.16.1",
     "emailjs-imap-client": "^3.1.0",
     "googleapis": "^68.0.0",
