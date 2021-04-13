@@ -32,17 +32,6 @@ module.exports = function (RED: Red) {
       })
       .sort()
 
-    node.log(
-      [
-        `Setting up ${slots.length} slots${config.name ? ` for ${config.name}` : ''}`,
-        ...slots.map((it) => {
-          const start = startOfWeek(new Date())
-          const date = new Date(start.valueOf() + it)
-          return `→ ${format(date, 'cccc HH:mm')}`
-        }),
-      ].join('\n'),
-    )
-
     const circuitBreakerMaxEmit =
       isString(config.failsafe) && isNumber(parseInt(config.failsafe, 10)) ? parseInt(config.failsafe, 10) : 2
 
