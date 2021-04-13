@@ -209,30 +209,33 @@ export function csv2Tweets({
 
       return it
     })
-    .map((it) => {
-      if (it instanceof Error) {
-        return it
+    .map((tweet) => {
+      if (tweet instanceof Error) {
+        return tweet
       }
 
       let candidates = CTAs.map((cta) => {
-        const content = `${it.description}\n\n${cta} ${it.link}`
-        return { ...it, content, length: collapseLinks(content).length }
+        const content = `${tweet.description}\n\n${cta} ${tweet.link}`
+        return { ...tweet, content, length: collapseLinks(content).length }
       })
         .filter((it) => it.length <= 280)
-        .map((it) => {
-          return {
-            text: it.content,
-            images: [it.image_1, it.image_2].filter((it) => !!it) as string[],
-          }
-        })
+        .map((it) => it.content)
 
       if (candidates.length === 0) {
-        return new TweetParseError(`The tweet ${it.description} is too long! Cannot add the CTA.`)
+        return new TweetParseError(`The tweet ${tweet.description} is too long! Cannot add the CTA.`)
       }
 
       const shuffledCandidates = shuffle(candidates)
 
-      return { variations: shuffledCandidates.slice(0, totalVariations), categories: it.categories ?? [] }
+      return {
+        variations: shuffledCandidates.slice(0, totalVariations).map((it, index) => {
+          return {
+            text: it,
+            images: index % 2 === 0 ? (tweet.image_1 ? [tweet.image_1] : []) : tweet.image_2 ? [tweet.image_2] : [],
+          }
+        }),
+        categories: tweet.categories ?? [],
+      }
     })
 
   return tweets

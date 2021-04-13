@@ -21,12 +21,6 @@ module.exports = function (RED: Red) {
       api_secret: credentials.cloudinaryApiSecret,
     })
 
-    console.log({
-      cloud_name: config.cloudinaryName,
-      api_key: config.cloudinaryApiKey,
-      api_secret: credentials.cloudinaryApiSecret,
-    })
-
     WorkerNode({
       fn: Setup({ node, cloudinary }),
       isAction,
