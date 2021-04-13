@@ -18,7 +18,7 @@ node(
         "@npm//@types/node",
         "@npm//node-red",
         "@npm//zod",
-        "@npm//twitter-lite",
+        "@npm//twitter-api-client",
         "@npm//axios"
     ],
 )

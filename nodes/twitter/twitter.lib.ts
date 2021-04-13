@@ -1,10 +1,10 @@
 import { Node } from 'node-red'
 import { Actions, Events, Event } from './twitter.common'
-import Twitter from 'twitter-lite'
 import { axios, prettyAxiosErrors, AxiosResponse } from '../axios'
 import { inspect } from 'util'
+import { TwitterClient } from 'twitter-api-client'
 
-export function Setup({ node, clientApi, clientUpload }: { node: Node; clientApi: Twitter; clientUpload: Twitter }) {
+export function Setup({ node, client }: { node: Node; client: TwitterClient }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
     switch (action.topic) {
       case 'PUBLISH.V1': {
@@ -23,10 +23,10 @@ export function Setup({ node, clientApi, clientUpload }: { node: Node; clientApi
 
           try {
             const mediaId = (
-              await clientUpload.post('media/upload', {
-                media_data: Buffer.from(imageData, 'binary').toString('base64'),
+              await client.media.mediaUpload({
+                media_data: Buffer.from(imageData).toString('base64'),
               })
-            ).media_id
+            ).media_id_string
             mediaIds.push(mediaId)
           } catch (error) {
             node.warn(`Error while uploading the image ${image}\n${inspect(error)}`)
@@ -34,9 +34,9 @@ export function Setup({ node, clientApi, clientUpload }: { node: Node; clientApi
         }
 
         try {
-          const response = await clientApi.post('statuses/update', {
+          const response = await client.tweets.statusesUpdate({
             status: text,
-            media_ids: mediaIds,
+            media_ids: mediaIds.join(','),
           })
           send(
             Event.published({
@@ -68,11 +68,11 @@ export function Setup({ node, clientApi, clientUpload }: { node: Node; clientApi
         const { tweetId, id } = action.payload
 
         try {
-          const response = await clientApi.post('statuses/retweet/:id', { id: tweetId })
+          const response = await client.tweets.statusesRetweetsById({ id: tweetId })
           send(
             Event.published({
               id,
-              tweetId: response.id_str,
+              tweetId,
             }),
           )
           node.log(`Retweeted tweet ${action.payload.id}`)
@@ -115,10 +115,18 @@ class ImageDownloadError extends Error {
   }
 }
 
-async function fetchImage(image: string): Promise<string | ImageDownloadError> {
-  let response: AxiosResponse
+async function fetchImage(image: string): Promise<ArrayBuffer | ImageDownloadError> {
+  let origin = ''
   try {
-    response = await axios.get<string>(image)
+    const url = new URL(image)
+    origin = url.origin
+  } catch {
+    return new ImageDownloadError(`Invalid image URL ${image}`)
+  }
+
+  let response: AxiosResponse<ArrayBuffer>
+  try {
+    response = await axios.get<ArrayBuffer>(image, { responseType: 'arraybuffer', headers: { Referer: origin } })
   } catch (e) {
     return prettyAxiosErrors(e)({
       noResponse: () => new ImageDownloadError(`Timed out while fetching the image`),

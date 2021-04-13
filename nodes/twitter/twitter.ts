@@ -2,7 +2,7 @@ import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './twitter.lib'
 import { isAction, upgradeAction, isEvent } from './twitter.common'
 import { WorkerNode } from '../worker-node'
-import * as TwitterLite from 'twitter-lite'
+import { TwitterClient } from 'twitter-api-client'
 
 module.exports = function (RED: Red) {
   function Twitter(this: Node, config: NodeProperties & { consumer_key?: string; access_token_key?: string }) {
@@ -33,24 +33,15 @@ module.exports = function (RED: Red) {
       return
     }
 
-    const clientApi = new TwitterLite.default({
-      subdomain: 'api',
-      access_token_key: accessTokenKey,
-      access_token_secret: accessTokenSecret,
-      consumer_key: consumerKey,
-      consumer_secret: consumerSecret,
-    })
-
-    const clientUpload = new TwitterLite.default({
-      subdomain: 'upload',
-      access_token_key: accessTokenKey,
-      access_token_secret: accessTokenSecret,
-      consumer_key: consumerKey,
-      consumer_secret: consumerSecret,
+    const client = new TwitterClient({
+      apiKey: consumerKey,
+      apiSecret: consumerSecret,
+      accessToken: accessTokenKey,
+      accessTokenSecret: accessTokenSecret,
     })
 
     WorkerNode({
-      fn: Setup({ node, clientApi, clientUpload }),
+      fn: Setup({ node, client }),
       isAction,
       isEvent,
       node,
