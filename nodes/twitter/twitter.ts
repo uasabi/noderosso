@@ -33,7 +33,16 @@ module.exports = function (RED: Red) {
       return
     }
 
-    const client = new TwitterLite.default({
+    const clientApi = new TwitterLite.default({
+      subdomain: 'api',
+      access_token_key: accessTokenKey,
+      access_token_secret: accessTokenSecret,
+      consumer_key: consumerKey,
+      consumer_secret: consumerSecret,
+    })
+
+    const clientUpload = new TwitterLite.default({
+      subdomain: 'upload',
       access_token_key: accessTokenKey,
       access_token_secret: accessTokenSecret,
       consumer_key: consumerKey,
@@ -41,7 +50,7 @@ module.exports = function (RED: Red) {
     })
 
     WorkerNode({
-      fn: Setup({ node, client }),
+      fn: Setup({ node, clientApi, clientUpload }),
       isAction,
       isEvent,
       node,

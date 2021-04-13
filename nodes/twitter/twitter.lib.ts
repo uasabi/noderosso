@@ -4,7 +4,7 @@ import Twitter from 'twitter-lite'
 import { axios, prettyAxiosErrors, AxiosResponse } from '../axios'
 import { inspect } from 'util'
 
-export function Setup({ node, client }: { node: Node; client: Twitter }) {
+export function Setup({ node, clientApi, clientUpload }: { node: Node; clientApi: Twitter; clientUpload: Twitter }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
     switch (action.topic) {
       case 'PUBLISH.V1': {
@@ -23,7 +23,7 @@ export function Setup({ node, client }: { node: Node; client: Twitter }) {
 
           try {
             const mediaId = (
-              await client.post('media/upload', {
+              await clientUpload.post('media/upload', {
                 media_data: Buffer.from(imageData, 'binary').toString('base64'),
               })
             ).media_id
@@ -34,7 +34,7 @@ export function Setup({ node, client }: { node: Node; client: Twitter }) {
         }
 
         try {
-          const response = await client.post('statuses/update', {
+          const response = await clientApi.post('statuses/update', {
             status: text,
             media_ids: mediaIds,
           })
@@ -68,7 +68,7 @@ export function Setup({ node, client }: { node: Node; client: Twitter }) {
         const { tweetId, id } = action.payload
 
         try {
-          const response = await client.post('statuses/retweet/:id', { id: tweetId })
+          const response = await clientApi.post('statuses/retweet/:id', { id: tweetId })
           send(
             Event.published({
               id,
