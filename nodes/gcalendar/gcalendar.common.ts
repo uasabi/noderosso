@@ -26,6 +26,10 @@ const Schema = {
       timezone: z.string().nonempty().optional(),
     }),
   }),
+  failed: z.object({
+    topic: z.literal('FAILED.V1'),
+    payload: z.object({ message: z.string() }),
+  }),
 }
 
 export const actions = z.union([Schema.tick, Schema.list, Schema.create])
@@ -37,10 +41,14 @@ export function upgradeAction(action: any, log: (message: string) => void): z.in
   return action
 }
 
-export const events = z.void()
+export const events = Schema.failed
 export type Events = ReturnType<typeof Event[keyof typeof Event]>
 export function isEvent(event: unknown): event is Events {
   return events.safeParse(event).success
 }
 
-export const Event = {}
+export const Event = {
+  faileed(args: Omit<z.infer<typeof Schema.failed>, 'topic'>['payload']): z.infer<typeof Schema.failed> {
+    return { topic: 'FAILED.V1' as const, payload: args }
+  },
+}

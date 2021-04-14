@@ -5,17 +5,28 @@ import { WorkerNode } from '../worker-node'
 import { google } from 'googleapis'
 import { urlencoded, json, Request, Response } from 'express'
 import { inspect } from 'util'
+import { asyncContext } from '../context'
 
 module.exports = function (RED: Red) {
   function GCalendar(this: Node, config: NodeProperties) {
     RED.nodes.createNode(this, config)
     const node = this
     const credentials = (this as any).credentials
+    const context = asyncContext(node.context())
 
     const auth = new google.auth.OAuth2(credentials.clientId, credentials.clientSecret)
-    auth.setCredentials({
-      refresh_token: credentials.refreshToken,
-      access_token: credentials.accessToken,
+
+    context.get<string>('refresh-token').then((refreshToken) => {
+      auth.setCredentials({
+        refresh_token: refreshToken ?? credentials.refreshToken,
+        access_token: credentials.accessToken,
+      })
+    })
+
+    auth.on('tokens', (tokens) => {
+      if (tokens.refresh_token) {
+        context.set('refresh-token', tokens.refresh_token)
+      }
     })
 
     WorkerNode({
