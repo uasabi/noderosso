@@ -18,6 +18,7 @@ NODES = [
     "//nodes/my-first-node",
     "//nodes/postgres",
     "//nodes/reddit-scraper",
+    "//nodes/sendgrid-extended",
     "//nodes/smarterqueue",
     "//nodes/twitter",
     "//nodes/tweet-importer",

@@ -1,0 +1,61 @@
+<script type="text/javascript">
+  RED.nodes.registerType('Sendgrid account', {
+    category: 'config',
+    defaults: {
+      accountName: { value: '', required: true }
+    },
+    credentials: {
+      apiKey: { type: "password", required: true }
+    },
+    label: function () {
+        return this.accountName || 'Default';
+    },
+  });
+</script>
+
+<script type="text/html" data-template-name="Sendgrid account">
+  <div class="form-row">
+    <label for="node-config-input-accountName"><i class="icon-tag"></i> Name</label>
+    <input type="text" id="node-config-input-accountName" placeholder="Name">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-apiKey"><i class="fa fa-telegram"></i> Api key</label>
+    <input type="text" id="node-config-input-apiKey" placeholder="Sendgrid API key">
+  </div>
+</script>
+
+<script type="text/html" data-help-name="Sendgrid account">
+  <p>A configuration node that holds the token of Sendgrid.</p>
+</script>
+
+<script type="text/javascript">
+  RED.nodes.registerType('sendgrid-extended', {
+    category: 'function',
+    color: '#a6bbcf',
+    defaults: {
+      name: { value: '' },
+      sendgridAccount: { value: '', type: 'Sendgrid account', required: true },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: 'file.png',
+    label: function () {
+      return this.name || 'sendgrid-extended'
+    },
+  })
+</script>
+
+<script type="text/html" data-template-name="sendgrid-extended">
+  <div class="form-row">
+      <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+      <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+  <div class="form-row">
+      <label for="node-input-sendgridAccount"><i class="icon-tag"></i> Account</label>
+      <input type="text" id="node-input-sendgridAccount">
+  </div>
+</script>
+
+<script type="text/html" data-help-name="sendgrid-extended">
+  <p>A demo node</p>
+</script>
