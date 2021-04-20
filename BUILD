@@ -21,6 +21,7 @@ NODES = [
     "//nodes/sendgrid-extended",
     "//nodes/smarterqueue",
     "//nodes/twitter",
+    "//nodes/twitter-v2",
     "//nodes/tweet-importer",
     "//nodes/web-watcher",
     "//nodes/wordpress-scraper",
@@ -84,7 +85,7 @@ container_push(
     image = ":server",
     registry = "learnk8sregistry.azurecr.io",
     repository = "noderosso",
-    tag = "2021.04.016",
+    tag = "2021.04.017",
 )
 
 test_suite(
