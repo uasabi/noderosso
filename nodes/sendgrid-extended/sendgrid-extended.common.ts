@@ -20,13 +20,19 @@ const multipleOptionalEmails = z
       .filter((it) => /@/.test(it))
   })
 
-const singleEmail = z.object({
-  email: z
+const singleEmail = z.union([
+  z.object({
+    email: z
+      .string()
+      .transform((it) => it.trim())
+      .refine((it) => it.length > 0 && /@/.test(it)),
+    name: z.string().optional(),
+  }),
+  z
     .string()
     .transform((it) => it.trim())
     .refine((it) => it.length > 0 && /@/.test(it)),
-  name: z.string().optional(),
-})
+])
 
 const Schema = {
   send: Message.extend({
@@ -62,7 +68,6 @@ const Schema = {
       category: z.string().optional(),
       categories: z.array(z.string()).optional(),
       text: z.string().optional(),
-      message: z.string().nonempty(),
     }),
   }),
   error: z.object({

@@ -11,10 +11,10 @@ module.exports = function (RED: Red) {
 
     const configurationNode = RED.nodes.getNode(config.twitterAccount)
 
-    const consumerKey = (configurationNode as any)?.consumer_key
-    const accessTokenKey = (configurationNode as any)?.access_token_key
-    const consumerSecret = (configurationNode?.credentials as any)?.consumer_secret
-    const accessTokenSecret = (configurationNode?.credentials as any)?.access_token_secret
+    const consumerKey = (configurationNode as any)?.consumer_key?.trim()
+    const accessTokenKey = (configurationNode as any)?.access_token_key?.trim()
+    const consumerSecret = (configurationNode?.credentials as any)?.consumer_secret?.trim()
+    const accessTokenSecret = (configurationNode?.credentials as any)?.access_token_secret?.trim()
 
     if (!(isString(consumerKey) && !isEmpty(consumerKey))) {
       this.error(`Invalid consumer key ${consumerKey}`)
