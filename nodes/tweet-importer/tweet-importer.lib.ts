@@ -38,7 +38,11 @@ export function Setup({ node, cloudinary }: { node: Node; cloudinary: typeof Clo
                         if (it.endsWith('gif')) {
                           return cloudinary.url(it, { type: 'fetch' })
                         }
-                        return cloudinary.url(it, { type: 'fetch', format: 'png' })
+                        return cloudinary.url(it, {
+                          type: 'fetch',
+                          format: 'png',
+                          transformation: [{ if: 'w_gt_1600' }, { width: 1600 }, { if: 'else' }, { if: 'end' }],
+                        })
                       })
                       .filter((it) => !!it),
                   }
