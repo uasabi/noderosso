@@ -10,15 +10,26 @@ import { v2 as cloudinary } from 'cloudinary'
 const tachyonsCss = readFileSync(join(__dirname, './tachyons.min.4.12.0.css'))
 
 module.exports = function (RED: Red) {
-  function TweetImporter(this: Node, config: NodeProperties & { cloudinaryName: string; cloudinaryApiKey: string }) {
+  function TweetImporter(this: Node, config: NodeProperties & { cloudinaryAccount?: string }) {
     RED.nodes.createNode(this, config)
     const node = this
-    const credentials = (this as any).credentials
+
+    if (!config.cloudinaryAccount) {
+      this.error('Missing Cloudinary account')
+      return
+    }
+
+    const configurationNode = RED.nodes.getNode(config.cloudinaryAccount)
+
+    if (!configurationNode) {
+      this.error('Invalid configuration node')
+      return
+    }
 
     cloudinary.config({
-      cloud_name: config.cloudinaryName,
-      api_key: config.cloudinaryApiKey,
-      api_secret: credentials.cloudinaryApiSecret,
+      cloud_name: (configurationNode as any).accountName,
+      api_key: (configurationNode as any).apiKey,
+      api_secret: (configurationNode.credentials as any).apiSecret,
     })
 
     WorkerNode({
@@ -156,6 +167,18 @@ module.exports = function (RED: Red) {
         success: `${message} ${parsedTweets.length} tweets, ${allVariations.length} variations and ${images.length} images!`,
       }),
     )
+  })
+
+  function CloudinaryAccount(this: Node, config: NodeProperties & { accountName: string; apiKey: string }) {
+    RED.nodes.createNode(this, config)
+    ;(this as any).accountName = config.accountName
+    ;(this as any).apiKey = config.apiKey
+  }
+
+  RED.nodes.registerType('Cloudinary account', CloudinaryAccount, {
+    credentials: {
+      apiSecret: { type: 'password' },
+    },
   })
 }
 
