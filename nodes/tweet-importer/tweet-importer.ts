@@ -55,7 +55,7 @@ module.exports = function (RED: Red) {
       return
     }
 
-    res.send(renderTemplate({ nodeId, csv: '' }))
+    res.send(renderTemplate({ nodeId, csv: '', totalVariations: 2 }))
   })
 
   function renderTemplate({
@@ -63,11 +63,13 @@ module.exports = function (RED: Red) {
     csv,
     errors,
     success,
+    totalVariations,
   }: {
     nodeId: string
     csv: string
     errors?: Error[]
     success?: string
+    totalVariations: number
   }): string {
     const form = [
       '<div class="bg-washed-blue pa3 ba bw1 b--light-gray br2 mt4">',
@@ -77,7 +79,7 @@ module.exports = function (RED: Red) {
       '    <p class="f2 tc">OR</p>',
       '    <p class="f5 mb0">Copy and paste csv text here.</p>',
       `    <textarea id="csv-textarea" rows="5" name="csv" class="mv3 input-reset ba w-100 br2 bg-white f6 pv2 ph3 b--silver">${csv}</textarea>`,
-      `    <p><label for='total-variations' class="f4 b">Total variations</label><input type='number' class="input-reset ba w3 br2 bg-white f4 pv2 ph3 b--silver border-box ml3" name="totalVariations" value="2"/></p>`,
+      `    <p><label for='total-variations' class="f4 b">Total variations</label><input type='number' class="input-reset ba w3 br2 bg-white f4 pv2 ph3 b--silver border-box ml3" name="totalVariations" value="${totalVariations}"/></p>`,
       '    <div class="flex justify-between">',
       '    <input type="submit" id="submit" name="submit" value="Submit" class="input-reset bn pv2 bg-navy white db ttu b f4 br1 flex-auto mr3 pointer"/>',
       '    <input type="submit" id="preview" name="preview" value="Preview" class="input-reset bn pv2 bg-near-gray black-80 db w5 ttu b f4 br1 pointer"/>',
@@ -92,7 +94,7 @@ module.exports = function (RED: Red) {
       `${form}`,
       `${
         Array.isArray(errors) && errors.length > 0
-          ? `<ul>${errors
+          ? `<ul class="overflow-auto">${errors
               .map((it) => {
                 return `<li>${it.name}<pre>${it.message}</pre></li>`
               })
@@ -130,13 +132,18 @@ module.exports = function (RED: Red) {
     const parsedTweets = csv2Tweets({ csv: csvText, totalVariations })
 
     if (parsedTweets instanceof Error) {
-      res.send(renderTemplate({ nodeId, csv: csvText, errors: [parsedTweets] }))
+      res.send(renderTemplate({ nodeId, csv: csvText, errors: [parsedTweets], totalVariations }))
       return
     }
 
     if (parsedTweets.some((it) => it instanceof Error)) {
       res.send(
-        renderTemplate({ nodeId, csv: csvText, errors: parsedTweets.filter((it) => it instanceof Error) as Error[] }),
+        renderTemplate({
+          nodeId,
+          csv: csvText,
+          errors: parsedTweets.filter((it) => it instanceof Error) as Error[],
+          totalVariations,
+        }),
       )
       return
     }
@@ -165,6 +172,7 @@ module.exports = function (RED: Red) {
         nodeId,
         csv: isSubmit ? '' : csvText,
         success: `${message} ${parsedTweets.length} tweets, ${allVariations.length} variations and ${images.length} images!`,
+        totalVariations,
       }),
     )
   })
