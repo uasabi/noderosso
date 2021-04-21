@@ -154,7 +154,8 @@ export function csv2Tweets({
     categories: literal('categories'),
   })
 
-  if (firstRowSchema.safeParse(firstRow).success) {
+  const hasHeader = firstRowSchema.safeParse(firstRow).success
+  if (hasHeader) {
     parsedCsv = parsedCsv.slice(1)
   }
 
@@ -175,9 +176,10 @@ export function csv2Tweets({
           return `${it}: ${fieldErrors[it]!.join(', ')}`
         })
         return new TweetParseError(
-          `Error while parsing tweet schema at row ${index}\n${[...formErrors, ...errorMessages].join(
-            '\n',
-          )}\nrow: ${JSON.stringify(it, null, 2)}`,
+          `Error while parsing tweet schema at row ${index + 1 + (hasHeader ? 1 : 0)}\n${[
+            ...formErrors,
+            ...errorMessages,
+          ].join('\n')}\nrow: ${JSON.stringify(it, null, 2)}`,
         )
       }
     })
@@ -243,8 +245,4 @@ export function csv2Tweets({
     })
 
   return tweets
-}
-
-function onlyUnique(value: string, index: number, self: string[]) {
-  return self.indexOf(value) === index
 }
