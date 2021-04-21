@@ -54,7 +54,7 @@ function supportedImages(value: string | undefined): boolean {
 
   const pathname = new URL(value).pathname.toLowerCase()
 
-  return ['jpg', 'png', 'gif', 'jpeg', 'svg'].some((it) => pathname.endsWith(it))
+  return ['jpg', 'png', 'gif', 'jpeg', 'svg', 'webp'].some((it) => pathname.endsWith(it))
 }
 
 export const TweetSchema = z.object({
