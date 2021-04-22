@@ -6,8 +6,12 @@ import sendgrid from '@sendgrid/mail'
 import * as z from 'zod'
 
 module.exports = function (RED: Red) {
-  function SendgridExtended(this: Node, config: NodeProperties & { sendgridAccount: string }) {
+  function SendgridExtended(
+    this: Node,
+    config: NodeProperties & { sendgridAccount: string; sendgridProfile?: string; dryrun: string },
+  ) {
     RED.nodes.createNode(this, config)
+    const isDryRun = config.dryrun?.trim().toLowerCase() === 'dryrun'
     const node = this
     const configurationNode = RED.nodes.getNode(config.sendgridAccount)
 
@@ -23,8 +27,17 @@ module.exports = function (RED: Red) {
 
     sendgrid.setApiKey(validateApiKey.data)
 
+    const profileNode = config.sendgridProfile ? RED.nodes.getNode(config.sendgridProfile) : undefined
+
+    const defaults = {
+      name: (profileNode as any)?.name,
+      from: (profileNode as any)?.from,
+      to: (profileNode as any)?.to,
+      category: (profileNode as any)?.category,
+    }
+
     WorkerNode({
-      fn: Setup({ node, sendgrid }),
+      fn: Setup({ node, sendgrid, defaults, isDryRun }),
       isAction,
       isEvent,
       node,
@@ -43,4 +56,17 @@ module.exports = function (RED: Red) {
       apiKey: { type: 'password' },
     },
   })
+
+  function SendgridExtendedProfile(
+    this: Node,
+    config: NodeProperties & { name: string; from: string; to: string; category: string },
+  ) {
+    RED.nodes.createNode(this, config)
+    ;(this as any).name = config.name
+    ;(this as any).from = config.from
+    ;(this as any).to = config.to
+    ;(this as any).category = config.category
+  }
+
+  RED.nodes.registerType('Sendgrid profile', SendgridExtendedProfile)
 }

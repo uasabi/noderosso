@@ -8,7 +8,7 @@
       apiKey: { type: "password", required: true }
     },
     label: function () {
-        return this.accountName || 'Default';
+      return this.accountName || 'Default';
     },
   });
 </script>
@@ -29,12 +29,52 @@
 </script>
 
 <script type="text/javascript">
+  RED.nodes.registerType('Sendgrid profile', {
+    category: 'config',
+    defaults: {
+      name: { value: '', required: true },
+      from: { value: '', required: true },
+      to: { value: '', required: true },
+      category: { value: '' },
+    },
+    label: function () {
+      return this.name || 'Default';
+    },
+  });
+</script>
+
+<script type="text/html" data-template-name="Sendgrid profile">
+  <div class="form-row">
+    <label for="node-config-input-name"><i class="icon-tag"></i> Name</label>
+    <input type="text" id="node-config-input-name" placeholder="Name">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-from"><i class="fa fa-tag"></i> From</label>
+    <input type="email" id="node-config-input-from">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-to"><i class="fa fa-tag"></i> To</label>
+    <input type="email" id="node-config-input-to">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-category"><i class="fa fa-tag"></i> Category</label>
+    <input type="email" id="node-config-input-category">
+  </div>
+</script>
+
+<script type="text/html" data-help-name="Sendgrid profile">
+  <p>A configuration node that holds Sendgrid profiles.</p>
+</script>
+
+<script type="text/javascript">
   RED.nodes.registerType('sendgrid-extended', {
     category: 'function',
     color: '#a6bbcf',
     defaults: {
       name: { value: '' },
+      dryrun: { value: 'dryrun' },
       sendgridAccount: { value: '', type: 'Sendgrid account', required: true },
+      sendgridProfile: { value: '', type: 'Sendgrid profile' },
     },
     inputs: 1,
     outputs: 1,
@@ -42,20 +82,37 @@
     label: function () {
       return this.name || 'sendgrid-extended'
     },
+    oneditprepare: function () {
+      const dryRunValue = $('#node-input-dryrun').val()
+      $('#dryrun-checkbox').prop('checked', dryRunValue === 'dryrun')
+    },
+    oneditsave: function () {
+      const isDryRunChecked = $('#dryrun-checkbox').prop('checked')
+      $('#node-input-dryrun').val(isDryRunChecked ? 'dryrun' : '')
+    }
   })
 </script>
 
 <script type="text/html" data-template-name="sendgrid-extended">
   <div class="form-row">
-      <label for="node-input-name"><i class="icon-tag"></i> Name</label>
-      <input type="text" id="node-input-name" placeholder="Name">
+    <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name">
   </div>
   <div class="form-row">
-      <label for="node-input-sendgridAccount"><i class="icon-tag"></i> Account</label>
-      <input type="text" id="node-input-sendgridAccount">
+    <label for="node-input-sendgridAccount"><i class="icon-tag"></i> Account</label>
+    <input type="text" id="node-input-sendgridAccount">
+  </div>
+  <div class="form-row">
+    <label for="node-input-sendgridProfile"><i class="icon-tag"></i> Profile</label>
+    <input type="text" id="node-input-sendgridProfile">
+  </div>
+  <div class="form-row">
+    <label for="node-input-dryrun"><i class="fa fa-file"></i> Dry run</label>
+    <input type="hidden" id="node-input-dryrun">
+    <input type="checkbox" id="dryrun-checkbox">
   </div>
 </script>
 
 <script type="text/html" data-help-name="sendgrid-extended">
-  <p>A demo node</p>
+  <p>A node that sends emails with Sendgrid</p>
 </script>

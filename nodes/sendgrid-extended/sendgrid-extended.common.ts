@@ -20,25 +20,46 @@ const multipleOptionalEmails = z
       .filter((it) => /@/.test(it))
   })
 
-const singleEmail = z.union([
-  z.object({
-    email: z
+const singleEmail = z
+  .union([
+    z.object({
+      email: z
+        .string()
+        .transform((it) => it.trim())
+        .refine((it) => it.length > 0 && /@/.test(it)),
+      name: z.string().optional(),
+    }),
+    z
       .string()
       .transform((it) => it.trim())
       .refine((it) => it.length > 0 && /@/.test(it)),
-    name: z.string().optional(),
-  }),
-  z
-    .string()
-    .transform((it) => it.trim())
-    .refine((it) => it.length > 0 && /@/.test(it)),
-])
+  ])
+  .transform((it) => {
+    const validateString = z.string().safeParse(it)
+    if (validateString.success) {
+      return { email: validateString.data, name: validateString.data }
+    }
+
+    return it as { email: string; name?: string }
+  })
+
+const subjectOrTitle = z
+  .string()
+  .optional()
+  .transform((it) => {
+    const subject = it?.trim()
+    if (!subject || subject.length === 0) {
+      return undefined
+    }
+
+    return subject
+  })
 
 const Schema = {
   send: Message.extend({
     topic: z.literal('SEND.V1'),
     payload: z.object({
-      from: singleEmail,
+      from: singleEmail.optional(),
       replyTo: singleEmail.optional(),
       to: z
         .union([z.array(z.string().nonempty()), z.string()])
@@ -52,19 +73,18 @@ const Schema = {
             .split(',')
             .filter((it) => /@/.test(it))
         })
-        .refine((it) => it.length > 0),
+        .optional(),
       bcc: multipleOptionalEmails,
       cc: multipleOptionalEmails,
-      subject: z
-        .string()
-        .transform((it) => it.trim())
-        .refine((it) => it.length > 0),
+      subject: subjectOrTitle,
+      title: subjectOrTitle,
       attachments: z
         .array(
           z.object({ content: z.string().nonempty(), filename: z.string().nonempty(), type: z.string().optional() }),
         )
         .optional(),
       html: z.string().optional(),
+      content: z.string().optional(),
       category: z.string().optional(),
       categories: z.array(z.string()).optional(),
       text: z.string().optional(),

@@ -15,19 +15,24 @@ module.exports = function (RED: Red) {
     const context = asyncContext(node.context())
 
     const auth = new google.auth.OAuth2(credentials.clientId, credentials.clientSecret)
-
-    context.get<string>('refresh-token').then((refreshToken) => {
-      auth.setCredentials({
-        refresh_token: refreshToken ?? credentials.refreshToken,
-        access_token: credentials.accessToken,
-      })
-    })
-
     auth.on('tokens', (tokens) => {
+      if (tokens.access_token) {
+        context.set('access-token', tokens.access_token)
+      }
+
       if (tokens.refresh_token) {
         context.set('refresh-token', tokens.refresh_token)
       }
     })
+
+    Promise.all([context.get<string>('refresh-token'), context.get<string>('access-token')]).then(
+      ([refreshToken, accessToken]) => {
+        auth.setCredentials({
+          refresh_token: refreshToken ?? credentials.refreshToken,
+          access_token: accessToken ?? credentials.accessToken,
+        })
+      },
+    )
 
     WorkerNode({
       fn: Setup({
