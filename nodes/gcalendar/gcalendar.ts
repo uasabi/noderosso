@@ -5,34 +5,18 @@ import { WorkerNode } from '../worker-node'
 import { google } from 'googleapis'
 import { urlencoded, json, Request, Response } from 'express'
 import { inspect } from 'util'
-import { asyncContext } from '../context'
 
 module.exports = function (RED: Red) {
   function GCalendar(this: Node, config: NodeProperties) {
     RED.nodes.createNode(this, config)
     const node = this
     const credentials = (this as any).credentials
-    const context = asyncContext(node.context())
 
     const auth = new google.auth.OAuth2(credentials.clientId, credentials.clientSecret)
-    auth.on('tokens', (tokens) => {
-      if (tokens.access_token) {
-        context.set('access-token', tokens.access_token)
-      }
 
-      if (tokens.refresh_token) {
-        context.set('refresh-token', tokens.refresh_token)
-      }
+    auth.setCredentials({
+      refresh_token: credentials.refreshToken,
     })
-
-    Promise.all([context.get<string>('refresh-token'), context.get<string>('access-token')]).then(
-      ([refreshToken, accessToken]) => {
-        auth.setCredentials({
-          refresh_token: refreshToken ?? credentials.refreshToken,
-          access_token: accessToken ?? credentials.accessToken,
-        })
-      },
-    )
 
     WorkerNode({
       fn: Setup({
@@ -50,7 +34,6 @@ module.exports = function (RED: Red) {
     credentials: {
       clientId: { type: 'text' },
       clientSecret: { type: 'password' },
-      accessToken: { type: 'password' },
       refreshToken: { type: 'password' },
     },
   })
@@ -70,6 +53,7 @@ module.exports = function (RED: Red) {
       const redirectUrl = client.generateAuthUrl({
         access_type: 'offline',
         scope: ['https://www.googleapis.com/auth/calendar'],
+        prompt: 'consent',
       })
       res.json({ redirectUrl })
     } catch (error) {

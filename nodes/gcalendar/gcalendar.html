@@ -9,7 +9,6 @@
       credentials: {
         clientId: { type: 'text', required: true },
         clientSecret: { type: 'password', required: true },
-        accessToken: { type: 'password', required: true, },
         refreshToken: { type: 'password', required: true, },
       },
       inputs: 1,
@@ -19,10 +18,9 @@
         return this.name || 'GCalendar'
       },
       oneditprepare: function () {
-        const accessToken = $('#node-input-accessToken').val()
         const refreshToken = $('#node-input-refreshToken').val()
 
-        if (accessToken.trim().length === 0 || refreshToken.trim().length === 0) {
+        if (refreshToken.trim().length === 0) {
           $('.step-2').hide()
           $('.step-3').hide()
         } else {
@@ -64,7 +62,6 @@
             }
 
             $('.step-3').show()
-            $('#node-input-accessToken').val(response.accessToken)
             $('#node-input-refreshToken').val(response.refreshToken)
             $('.hide-when-completed').hide()
           })
@@ -99,11 +96,7 @@
     <input type="text" id="node-input-code">
   </div>
   <div class="form-row step-2 hide-when-completed">
-    <button id="gcalendar-code" class="ui-button ui-corner-all ui-widget primary">Generate access & refresh token</button>
-  </div>
-  <div class="form-row step-3">
-    <label for="node-input-accessToken"><i class="icon-tag"></i> Access Token</label>
-    <input type="password" id="node-input-accessToken">
+    <button id="gcalendar-code" class="ui-button ui-corner-all ui-widget primary">Generate refresh token</button>
   </div>
   <div class="form-row step-3">
     <label for="node-input-refreshToken"><i class="icon-tag"></i> Refresh Token</label>
