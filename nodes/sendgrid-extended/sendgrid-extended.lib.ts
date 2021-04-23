@@ -60,7 +60,7 @@ export function Setup({
           node.status({
             fill: 'green',
             shape: 'dot',
-            text: `Sent email ${action.payload.subject} ${time()}`,
+            text: `Sent email ${payload.subject} ${time()}`,
           })
         } catch (error) {
           node.error(`Error: ${inspect(error)}`)
