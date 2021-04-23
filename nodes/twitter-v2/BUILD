@@ -16,9 +16,10 @@ node(
         "//nodes:worker_node",
         "//types",
         "@npm//@types/node",
+        "@npm//axios",
+        "@npm//leven",
         "@npm//node-red",
-        "@npm//zod",
         "@npm//twitter-api-client",
-        "@npm//axios"
+        "@npm//zod",
     ],
 )

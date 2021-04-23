@@ -32,7 +32,6 @@ const Schema = {
   }),
   duplicate: TweetLink.extend({
     topic: z.literal('DUPLICATE.V1'),
-    payload: z.object({ id: z.string().nonempty(), message: z.string().nonempty() }),
   }),
 }
 

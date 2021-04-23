@@ -27,6 +27,7 @@
     "hast-util-to-html": "^7.1.1",
     "hast-util-to-string": "^1.0.3",
     "human-interval": "^1.0.0",
+    "leven": "^2.1.0",
     "mailparser": "^2.8.0",
     "node-red": "^1.2.9",
     "node-red-contrib-rss": "^0.1.5",

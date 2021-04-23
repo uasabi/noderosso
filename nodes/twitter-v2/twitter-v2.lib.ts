@@ -4,6 +4,7 @@ import { axios, prettyAxiosErrors, AxiosResponse } from '../axios'
 import { inspect } from 'util'
 import { TwitterClient } from 'twitter-api-client'
 import * as z from 'zod'
+import leven from 'leven'
 
 export function Setup({ node, client }: { node: Node; client: TwitterClient }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
@@ -73,10 +74,24 @@ export function Setup({ node, client }: { node: Node; client: TwitterClient }) {
             validateError.data?.statusCode === 403 &&
             validateError.data?.data.errors.some((it) => it.code === 187)
           ) {
-            const message = `The tweet ${id} is duplicate`
-            send(Event.duplicate({ id, message }))
-            node.log(message)
-            node.status({ fill: 'yellow', shape: 'dot', text: `Duplicate ${time()}` })
+            const duplicateTweet = await findDuplicateTweet(client, text)
+
+            if (duplicateTweet) {
+              const message = `The tweet ${id} is duplicate`
+              send(Event.duplicate({ id, tweetId: duplicateTweet.tweetId }))
+              node.log(message)
+              node.status({ fill: 'yellow', shape: 'dot', text: `Duplicate ${time()}` })
+            } else {
+              const message = `Find duplicate tweet ${id}, but I couldn't find the tweet`
+              send(
+                Event.failed({
+                  id,
+                  message,
+                }),
+              )
+              node.error(message)
+              node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
+            }
           } else {
             const message = `Error while posting the tweet ${id}\n${inspect(error)}`
             send(
@@ -167,4 +182,16 @@ async function fetchImage(image: string): Promise<ArrayBuffer | ImageDownloadErr
   }
 
   return response.data
+}
+
+async function findDuplicateTweet(client: TwitterClient, content: string): Promise<{ tweetId: string } | undefined> {
+  try {
+    const timeline = await client.tweets.statusesUserTimeline({ exclude_replies: true })
+    const tweets = timeline
+      .map((it) => ({ id: it.id_str, score: leven(it.text, content) }))
+      .sort((a, b) => a.score - b.score)
+    return tweets[0]?.id ? { tweetId: `${tweets[0].id}` } : undefined
+  } catch (error) {
+    return undefined
+  }
 }
