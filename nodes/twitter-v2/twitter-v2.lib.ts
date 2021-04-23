@@ -3,6 +3,7 @@ import { Actions, Events, Event } from './twitter-v2.common'
 import { axios, prettyAxiosErrors, AxiosResponse } from '../axios'
 import { inspect } from 'util'
 import { TwitterClient } from 'twitter-api-client'
+import * as z from 'zod'
 
 export function Setup({ node, client }: { node: Node; client: TwitterClient }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
@@ -51,15 +52,42 @@ export function Setup({ node, client }: { node: Node; client: TwitterClient }) {
             text: `Last processed ${action.payload.id} ${time()}`,
           })
         } catch (error) {
-          const message = `Error while posting the tweet ${action.payload.id}\n${inspect(error)}`
-          send(
-            Event.failed({
-              id,
-              message,
-            }),
-          )
-          node.error(message)
-          node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
+          const validateError = z
+            .object({ statusCode: z.number(), data: z.string() })
+            .transform((it) => {
+              const validateData = z
+                .object({ errors: z.array(z.object({ code: z.number(), message: z.string() })) })
+                .safeParse(JSON.parse(it.data))
+
+              if (validateData.success) {
+                return { ...it, data: validateData.data }
+              }
+
+              return undefined
+            })
+            .refine((it) => !!it)
+            .safeParse(error)
+
+          if (
+            validateError.success &&
+            validateError.data?.statusCode === 403 &&
+            validateError.data?.data.errors.some((it) => it.code === 187)
+          ) {
+            const message = `The tweet ${id} is duplicate`
+            send(Event.duplicate({ id, message }))
+            node.log(message)
+            node.status({ fill: 'yellow', shape: 'dot', text: `Duplicate ${time()}` })
+          } else {
+            const message = `Error while posting the tweet ${id}\n${inspect(error)}`
+            send(
+              Event.failed({
+                id,
+                message,
+              }),
+            )
+            node.error(message)
+            node.status({ fill: 'red', shape: 'dot', text: `Error ${time()}` })
+          }
         }
 
         return done()

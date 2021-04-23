@@ -30,6 +30,10 @@ const Schema = {
     topic: z.literal('FAILED.V1'),
     payload: z.object({ id: z.string().nonempty(), message: z.string().nonempty() }),
   }),
+  duplicate: TweetLink.extend({
+    topic: z.literal('DUPLICATE.V1'),
+    payload: z.object({ id: z.string().nonempty(), message: z.string().nonempty() }),
+  }),
 }
 
 export const actions = z.union([Schema.publish, Schema.retweet])
@@ -41,7 +45,7 @@ export function upgradeAction(action: any, log: (message: string) => void): z.in
   return action
 }
 
-export const events = z.union([Schema.published, Schema.retweeted, Schema.failed])
+export const events = z.union([Schema.published, Schema.retweeted, Schema.failed, Schema.duplicate])
 export type Events = ReturnType<typeof Event[keyof typeof Event]>
 export function isEvent(event: unknown): event is Events {
   return events.safeParse(event).success
@@ -56,5 +60,8 @@ export const Event = {
   },
   failed(args: Omit<z.infer<typeof Schema.failed>, 'topic'>['payload']): z.infer<typeof Schema.failed> {
     return { topic: 'FAILED.V1' as const, payload: args }
+  },
+  duplicate(args: Omit<z.infer<typeof Schema.duplicate>, 'topic'>['payload']): z.infer<typeof Schema.duplicate> {
+    return { topic: 'DUPLICATE.V1' as const, payload: args }
   },
 }
