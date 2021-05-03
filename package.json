@@ -40,6 +40,7 @@
     "puppeteer-extra-plugin-adblocker": "^2.11.10",
     "puppeteer-extra-plugin-stealth": "^2.6.7",
     "querystring": "^0.2.0",
+    "rrule": "^2.6.8",
     "rss-parser": "^3.8.0",
     "tall": "^3.1.0",
     "timezone-support": "^2.0.2",

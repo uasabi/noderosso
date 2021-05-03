@@ -4,7 +4,7 @@
     color: '#a6bbcf',
     defaults: {
       name: { value: '' },
-      slots: { value: '' },
+      rrule: { value: '', required: true },
       failsafe: { value: '' },
     },
     inputs: 1,
@@ -13,51 +13,18 @@
     label: function () {
       return this.name || 'smarterqueue'
     },
-    oneditprepare: function () {
-      $('#schedule')
-        .css('min-height', '150px')
-        .css('min-width', '450px')
-        .editableList({
-          sortable: true,
-          removable: true,
-          header: $('<div>').text('Schedule'),
-          addButton: 'Add a slot',
-          addItem: function (row, index, data) {
-            $(row).append($('<input type="text" name="slot[]"/>').val(isString(data) ? data : ''))
-            function isString(value) {
-              return {}.toString.call(value) === '[object String]'
-            }
-          },
-        })
-      const slots = ($('#node-input-slots').val() + '')
-        .split('|')
-        .filter((it) => it.length > 0)
-
-      $.post(`smarter-queue/${this.id}/parse-dates`, { dates: slots }).then(({ dates }) => {
-        $('#schedule').editableList('addItems', dates)
-      })
-    },
-    oneditsave: function () {
-      const slots = $('[name="slot[]"]')
-        .map((index, element) => {
-          return $(element).val()
-        })
-        .get()
-        .filter((it) => !!it && (it + '').trim().length > 0)
-        .map((it) => it.trim())
-      $('#node-input-slots').val(slots.join('|'))
-    },
   })
 </script>
 
 <script type="text/html" data-template-name="smarterqueue">
   <div class="form-row">
-      <label for="node-input-name"><i class="icon-tag"></i> Name</label>
-      <input type="text" id="node-input-name" placeholder="Name">
+    <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name">
   </div>
   <div class="form-row">
-    <input type="hidden" id="node-input-slots">
-    <ul id="schedule"></ul>
+    <label for="node-input-rrule"><i class="icon-tag"></i> RRULE</label>
+    <input type="text" id="node-input-rrule" placeholder="FREQ=DAILY;INTERVAL=2;COUNT=4">
+    <p>You can create a standard schedule <a href="https://jakubroztocil.github.io/rrule/" target="_blank" style="text-decoration: underline;">here</a> or <a href="https://github.com/jakubroztocil/rrule" style="text-decoration: underline;" target="_blank">a more complex schedule with the API here</a> (see RRuleSet).</p>
   </div>
   <div class="form-row">
     <label for="node-input-failsafe"><i class="icon-tag"></i> Max emit</label>
@@ -66,5 +33,5 @@
 </script>
 
 <script type="text/html" data-help-name="smarterqueue">
-  <p>Schedule tweets</p>
+  <p>Schedule tweets.</p>
 </script>

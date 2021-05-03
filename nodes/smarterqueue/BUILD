@@ -13,6 +13,7 @@ node(
         "@npm//human-interval",
         "@npm//date-fns",
         "@npm//@types/human-interval",
+        "@npm//rrule",
     ],
     deps = [
         "//nodes:worker_node",
@@ -24,6 +25,7 @@ node(
         "@npm//date-fns",
         "@npm//human-interval",
         "@npm//node-red",
+        "@npm//rrule",
         "@npm//zod",
     ],
 )

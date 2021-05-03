@@ -1,6 +1,7 @@
-import { add, isAfter, startOfWeek } from 'date-fns'
+import { isAfter } from 'date-fns'
 import humanInterval from 'human-interval'
 import { Node } from 'node-red'
+import RRule, { RRuleSet } from 'rrule'
 import { AsyncContext } from '../context'
 import { Actions, Events, Event } from './smarterqueue.common'
 
@@ -40,42 +41,19 @@ interface PublishedVariation {
   scheduleAt: null
 }
 
-class Scheduler {
-  private lastScheduledTime: Date | undefined = undefined
-  constructor(private context: AsyncContext) {}
-
-  public async getLastScheduledTime(): Promise<Date | undefined> {
-    if (!this.lastScheduledTime) {
-      this.lastScheduledTime = await findLastScheduleTime(this.context)
-    }
-
-    return this.lastScheduledTime
-  }
-
-  public setLastScheduledTime(date: Date): void {
-    this.lastScheduledTime = date
-  }
-
-  public resetLastScheduledTime(): void {
-    this.lastScheduledTime = undefined
-  }
-}
-
 export function Setup({
   node,
   context,
-  slots,
+  rrule,
   circuitBreakerMaxEmit,
   newDate,
 }: {
   node: Node
   context: AsyncContext
-  slots: number[]
+  rrule: RRule | RRuleSet
   circuitBreakerMaxEmit: number
   newDate: () => Date
 }) {
-  const scheduler = new Scheduler(context)
-
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
     switch (action.topic) {
       case 'FLUSH.V1': {
@@ -90,7 +68,7 @@ export function Setup({
       case 'QUEUE.V1': {
         const id = generateId()
 
-        const nextSlot = getNextSlot((await scheduler.getLastScheduledTime()) ?? newDate(), slots)
+        const nextSlot = rrule.after(await findLastScheduleTime(context, newDate))
 
         const firstVariation = action.payload.variations[0]!
         const firstVariationId = generateId()
@@ -125,8 +103,6 @@ export function Setup({
           },
           createdAt: new Date().toISOString(),
         })
-
-        scheduler.setLastScheduledTime(nextSlot)
 
         node.log(`Variation ${firstVariationId} from tweet ${id} scheduled for ${nextSlot.toISOString()}`)
         node.status({ fill: 'green', shape: 'dot', text: `Added tweet ${id} ${time()}` })
@@ -179,7 +155,7 @@ export function Setup({
           return done()
         }
 
-        const nextScheduleTime = getNextSlot((await scheduler.getLastScheduledTime()) ?? newDate(), slots)
+        const nextScheduleTime = rrule.after(await findLastScheduleTime(context, newDate))
         const nextVariation = Object.values(newTweet.variations).find((it) => it.type === 'unscheduled-variation')
 
         if (!nextVariation) {
@@ -198,8 +174,6 @@ export function Setup({
             [nextVariation.id]: scheduleVariation(nextVariation, nextScheduleTime, node),
           },
         })
-
-        scheduler.setLastScheduledTime(nextScheduleTime)
 
         node.log(
           `Variation ${
@@ -239,9 +213,9 @@ export function Setup({
         }
 
         let counter = 0
-        scheduler.resetLastScheduledTime()
+        let previousDate = newDate()
 
-        for (const [index, key] of keys.entries()) {
+        for (const key of keys) {
           const tweet = await context.get<Tweet>(key)
 
           if (!tweet) {
@@ -253,10 +227,9 @@ export function Setup({
             | ScheduledVariation
 
           const previousScheduledTime = firstValidVariation.publishedAt
-          const nextSlot = getNextSlot(
-            index === 0 ? newDate() : (await scheduler.getLastScheduledTime()) ?? newDate(),
-            slots,
-          )
+          const nextSlot = rrule.after(previousDate)
+
+          previousDate = nextSlot
 
           await context.set<Tweet>(key, {
             ...tweet,
@@ -266,8 +239,6 @@ export function Setup({
             },
           })
           counter++
-
-          scheduler.setLastScheduledTime(nextSlot)
 
           node.log(`Rescheduled tweet ${key} from ${previousScheduledTime ?? 'no slot'} to ${nextSlot}`)
         }
@@ -355,14 +326,13 @@ export function Setup({
   }
 }
 
-async function findLastScheduleTime(context: AsyncContext): Promise<Date | undefined> {
+async function findLastScheduleTime(context: AsyncContext, newDate: () => Date): Promise<Date> {
   const keys = await context.keys()
+  let latestSchedule: Date = newDate()
 
   if (keys.length === 0) {
-    return undefined
+    return latestSchedule
   }
-
-  let latestSchedule: Date = new Date('1970-01-01')
 
   for (const key of keys) {
     const tweet = await context.get<Tweet>(key)
@@ -387,17 +357,6 @@ async function findLastScheduleTime(context: AsyncContext): Promise<Date | undef
   return latestSchedule
 }
 
-export function getNextSlot(previousDate: Date, slots: number[]): Date {
-  const currentWeek = startOfWeek(previousDate)
-  for (const slot of slots) {
-    const currentDate = new Date(currentWeek.valueOf() + slot)
-    if (currentDate.valueOf() > previousDate.valueOf()) {
-      return currentDate
-    }
-  }
-  return add(currentWeek.valueOf() + slots[0]!, { weeks: 1 })
-}
-
 function assertUnreachable(x: never): void {}
 
 function time() {
@@ -410,10 +369,6 @@ function generateId() {
 
 function uuid() {
   return Math.random().toString(36).substring(7)
-}
-
-function isString(value: unknown): value is string {
-  return {}.toString.call(value) === '[object String]'
 }
 
 function isScheduledVariation(
