@@ -1,4 +1,3 @@
-import { isAfter } from 'date-fns'
 import humanInterval from 'human-interval'
 import { Node } from 'node-red'
 import RRule, { RRuleSet } from 'rrule'
@@ -68,43 +67,26 @@ export function Setup({
       case 'QUEUE.V1': {
         const id = generateId()
 
-        const nextSlot = rrule.after(await findLastScheduleTime(context, newDate))
-
-        const firstVariation = action.payload.variations[0]!
-        const firstVariationId = generateId()
-
         await context.set<Tweet>(id, {
           id,
-          variations: {
-            [firstVariationId]: <ScheduledVariation>{
-              type: 'scheduled-variation' as const,
-              id: firstVariationId,
-              text: firstVariation.text,
-              images: firstVariation.images,
-              publishedAt: null,
-              tweetId: null,
-              scheduleAt: nextSlot.toISOString(),
-            },
-            ...action.payload.variations.slice(1).reduce((acc, it) => {
-              const id = generateId()
-              return {
-                ...acc,
-                [id]: <UnscheduledVariation>{
-                  type: 'unscheduled-variation' as const,
-                  id,
-                  text: it.text,
-                  images: it.images,
-                  publishedAt: null,
-                  tweetId: null,
-                  scheduleAt: null,
-                },
-              }
-            }, {} as Record<string, UnscheduledVariation>),
-          },
+          variations: action.payload.variations.reduce((acc, it) => {
+            const id = generateId()
+            return {
+              ...acc,
+              [id]: <UnscheduledVariation>{
+                type: 'unscheduled-variation' as const,
+                id,
+                text: it.text,
+                images: it.images,
+                publishedAt: null,
+                tweetId: null,
+                scheduleAt: null,
+              },
+            }
+          }, {} as Record<string, UnscheduledVariation>),
           createdAt: new Date().toISOString(),
         })
 
-        node.log(`Variation ${firstVariationId} from tweet ${id} scheduled for ${nextSlot.toISOString()}`)
         node.status({ fill: 'green', shape: 'dot', text: `Added tweet ${id} ${time()}` })
         return done()
       }
@@ -143,74 +125,26 @@ export function Setup({
           },
         }
 
+        await context.set(internalTweetId, newTweet)
+
         if (Object.values(newTweet.variations).every((it) => it.type === 'published-variation')) {
-          await context.set(internalTweetId, newTweet)
-
           node.log(`Published all ${Object.values(newTweet.variations).length} variations for tweet ${internalTweetId}`)
-          node.status({
-            fill: 'green',
-            shape: 'dot',
-            text: `Tweet published ${Object.values(newTweet.variations).length} times. ${time()}`,
-          })
-          return done()
+        } else {
+          node.log(`Published variation ${variationId} for tweet ${internalTweetId}`)
         }
 
-        const nextScheduleTime = rrule.after(await findLastScheduleTime(context, newDate))
-        const nextVariation = Object.values(newTweet.variations).find((it) => it.type === 'unscheduled-variation')
-
-        if (!nextVariation) {
-          node.error(
-            `Cannot schedule next variation for Tweet ${internalTweetId}. Types: ${Object.values(newTweet.variations)
-              .map((it) => it.type)
-              .join(', ')}`,
-          )
-          return done()
-        }
-
-        await context.set<Tweet>(internalTweetId, {
-          ...newTweet,
-          variations: {
-            ...newTweet.variations,
-            [nextVariation.id]: scheduleVariation(nextVariation, nextScheduleTime, node),
-          },
+        node.status({
+          fill: 'green',
+          shape: 'dot',
+          text: `Tweet published ${newTweet.id} ${time()}`,
         })
 
-        node.log(
-          `Variation ${
-            currentVariation.id
-          } for tweet ${internalTweetId} scheduled for ${nextScheduleTime.toISOString()}`,
-        )
-        node.status({ fill: 'green', shape: 'dot', text: `Reschedule tweet ${internalTweetId} ${time()}` })
         return done()
       }
       case 'RESCHEDULE_ALL.V1': {
-        const keys = await filterSchedule(await context.keys()).then((keys) => {
+        const keys = await filterPublished(await context.keys()).then((keys) => {
           return keys.sort((a, b) => a.date.valueOf() - b.date.valueOf()).map((it) => it.id)
         })
-
-        async function filterSchedule(keys: string[]): Promise<{ id: string; date: Date }[]> {
-          return keys.reduce(async (acc, it) => {
-            const tweet = await context.get<Tweet>(it)
-
-            if (!tweet) {
-              return acc
-            }
-
-            const firstValidVariation = Object.values(tweet.variations).find((it) => !isPublishedVariation(it)) as
-              | UnscheduledVariation
-              | ScheduledVariation
-              | undefined
-
-            if (!firstValidVariation) {
-              return acc
-            }
-
-            return acc.then((acc) => [
-              ...acc,
-              { id: it, date: new Date(firstValidVariation?.scheduleAt ?? tweet.createdAt) },
-            ])
-          }, Promise.resolve<{ id: string; date: Date }[]>([]))
-        }
 
         let counter = 0
         let previousDate = newDate()
@@ -245,6 +179,30 @@ export function Setup({
 
         node.status({ fill: 'green', shape: 'dot', text: `Reschedule ${counter} tweets. ${time()}` })
         return done()
+
+        async function filterPublished(keys: string[]): Promise<{ id: string; date: Date }[]> {
+          return keys.reduce(async (acc, it) => {
+            const tweet = await context.get<Tweet>(it)
+
+            if (!tweet) {
+              return acc
+            }
+
+            const firstValidVariation = Object.values(tweet.variations).find((it) => !isPublishedVariation(it)) as
+              | UnscheduledVariation
+              | ScheduledVariation
+              | undefined
+
+            if (!firstValidVariation) {
+              return acc
+            }
+
+            return acc.then((acc) => [
+              ...acc,
+              { id: it, date: new Date(firstValidVariation?.scheduleAt ?? tweet.createdAt) },
+            ])
+          }, Promise.resolve<{ id: string; date: Date }[]>([]))
+        }
       }
       case 'TICK.V1': {
         const keys = await context.keys()
@@ -324,37 +282,6 @@ export function Setup({
         break
     }
   }
-}
-
-async function findLastScheduleTime(context: AsyncContext, newDate: () => Date): Promise<Date> {
-  const keys = await context.keys()
-  let latestSchedule: Date = newDate()
-
-  if (keys.length === 0) {
-    return latestSchedule
-  }
-
-  for (const key of keys) {
-    const tweet = await context.get<Tweet>(key)
-
-    if (!tweet) {
-      continue
-    }
-
-    const firstScheduledVariation = Object.values(tweet.variations).find((it) => isScheduledVariation(it)) as
-      | ScheduledVariation
-      | undefined
-
-    if (!firstScheduledVariation) {
-      continue
-    }
-
-    latestSchedule = isAfter(new Date(firstScheduledVariation.scheduleAt), latestSchedule)
-      ? new Date(firstScheduledVariation.scheduleAt)
-      : latestSchedule
-  }
-
-  return latestSchedule
 }
 
 function assertUnreachable(x: never): void {}

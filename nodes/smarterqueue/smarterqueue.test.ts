@@ -1,6 +1,5 @@
 import test from 'tape'
 import { Setup, Tweet } from './smarterqueue.lib'
-import humanInterval from 'human-interval'
 import { add } from 'date-fns'
 import { rrulestr } from 'rrule'
 
@@ -29,7 +28,7 @@ test('it should queue', async (assert) => {
   const variations1 = Object.values(tweet1.variations)
   assert.equal(variations1[0]!.text, '1')
   assert.equal(variations1[0]!.images.join(','), 'link1,link2')
-  assert.equal(variations1[0]!.scheduleAt, '2018-01-02T12:00:00.000Z')
+  assert.equal(variations1[0]!.scheduleAt, null)
 
   await input(
     {
@@ -53,7 +52,7 @@ test('it should queue', async (assert) => {
   const variations2 = Object.values(tweet2.variations)
   assert.equal(variations2[0]!.text, '2')
   assert.equal(variations2[0]!.images.join(','), 'link3,link4')
-  assert.equal(variations2[0]!.scheduleAt, '2018-01-03T12:00:00.000Z')
+  assert.equal(variations2[0]!.scheduleAt, null)
 
   assert.equal(variations2[1]!.text, '3')
   assert.equal(variations2[1]!.images.join(','), 'link5')
@@ -63,7 +62,7 @@ test('it should queue', async (assert) => {
 })
 
 test('it should publish', async (assert) => {
-  assert.plan(6)
+  assert.plan(7)
 
   const context = new MockContext()
   const input = Setup({
@@ -105,6 +104,15 @@ test('it should publish', async (assert) => {
   await input(
     {
       _msgid: '1',
+      topic: 'RESCHEDULE_ALL.V1',
+    },
+    () => assert.fail(),
+    () => assert.pass(),
+  )
+
+  await input(
+    {
+      _msgid: '1',
       topic: 'TICK.V1',
       payload: Date.now(),
     },
@@ -118,7 +126,7 @@ test('it should publish', async (assert) => {
 })
 
 test('it should reschedule all', async (assert) => {
-  assert.plan(6)
+  assert.plan(7)
 
   const context = new MockContext()
   const input = Setup({
@@ -150,6 +158,15 @@ test('it should reschedule all', async (assert) => {
     )
   }
 
+  await input(
+    {
+      _msgid: '1',
+      topic: 'RESCHEDULE_ALL.V1',
+    },
+    () => assert.fail(),
+    () => assert.pass('reschedule #1'),
+  )
+
   const keys = await context.keys()
 
   async function getSlot(tweetId: string): Promise<string> {
@@ -165,7 +182,7 @@ test('it should reschedule all', async (assert) => {
       topic: 'RESCHEDULE_ALL.V1',
     },
     () => assert.fail(),
-    () => assert.pass('reschedule'),
+    () => assert.pass('reschedule #2'),
   )
 
   const currentSlots = await Promise.all(keys.map((it) => getSlot(it)))
@@ -176,7 +193,7 @@ test('it should reschedule all', async (assert) => {
 })
 
 test('it should gc', async (assert) => {
-  assert.plan(4)
+  assert.plan(5)
 
   const context = new MockContext()
   const input = Setup({
@@ -198,6 +215,15 @@ test('it should gc', async (assert) => {
       () => assert.pass(),
     )
   }
+
+  await input(
+    {
+      _msgid: '1',
+      topic: 'RESCHEDULE_ALL.V1',
+    },
+    () => assert.fail(),
+    () => assert.pass('schedule'),
+  )
 
   const keys = await context.keys()
   const tweet = await context.get<Tweet>(keys[0]!)

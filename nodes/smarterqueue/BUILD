@@ -10,9 +10,7 @@ node(
         "@npm//@types/node",
         "@npm//@types/tape",
         "@npm//tape",
-        "@npm//human-interval",
         "@npm//date-fns",
-        "@npm//@types/human-interval",
         "@npm//rrule",
     ],
     deps = [
