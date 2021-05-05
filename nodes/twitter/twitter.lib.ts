@@ -68,9 +68,9 @@ export function Setup({ node, client }: { node: Node; client: TwitterClient }) {
         const { tweetId, id } = action.payload
 
         try {
-          const response = await client.tweets.statusesRetweetsById({ id: tweetId })
+          const response = await client.tweets.statusesRetweetById({ id: tweetId })
           send(
-            Event.published({
+            Event.retweeted({
               id,
               tweetId,
             }),

@@ -197,9 +197,15 @@ export function Setup({
               return acc
             }
 
+            const lastPublishedVariation = (Object.values(tweet.variations).filter((it) =>
+              isPublishedVariation(it),
+            ) as PublishedVariation[]).sort((a, b) => b.publishedAt?.localeCompare(a.publishedAt))[0] as
+              | PublishedVariation
+              | undefined
+
             return acc.then((acc) => [
               ...acc,
-              { id: it, date: new Date(firstValidVariation?.scheduleAt ?? tweet.createdAt) },
+              { id: it, date: new Date(lastPublishedVariation?.publishedAt ?? tweet.createdAt) },
             ])
           }, Promise.resolve<{ id: string; date: Date }[]>([]))
         }

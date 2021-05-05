@@ -25,6 +25,10 @@ const Schema = {
   }),
   reschedule: Message.extend({
     topic: z.literal('RESCHEDULE_ALL.V1'),
+    // payload: z
+    //   .object({ shuffle: z.boolean() })
+    //   .optional()
+    //   .transform((it) => it ?? { shuffle: false }),
   }),
   published: Message.extend({
     topic: z.literal('PUBLISHED.V1'),

@@ -253,6 +253,102 @@ test('it should gc', async (assert) => {
   assert.end()
 })
 
+test('it should reschedule all', async (assert) => {
+  assert.plan(9)
+
+  const context = new MockContext()
+  const input = Setup({
+    node: { log: noop, error: noop, warn: noop, status: noop } as any,
+    context,
+    rrule: rrulestr('DTSTART:20180101T120000Z\nRRULE:FREQ=DAILY;INTERVAL=1;WKST=MO;BYDAY=MO,TU,WE'),
+    circuitBreakerMaxEmit: 2,
+    newDate: () => new Date('2021-02-09T12:00:00.000Z'),
+  })
+  const items = [
+    {
+      variations: [
+        { text: '1', images: [] },
+        { text: '2', images: [] },
+      ],
+    },
+    {
+      variations: [
+        { text: '3', images: [] },
+        { text: '4', images: [] },
+      ],
+    },
+    {
+      variations: [
+        { text: '5', images: [] },
+        { text: '6', images: [] },
+      ],
+    },
+  ]
+  for (const item of items) {
+    await input(
+      { _msgid: '1', topic: 'QUEUE.V1', payload: item },
+      () => assert.fail(),
+      () => assert.pass('queue'),
+    )
+  }
+
+  await input(
+    {
+      _msgid: '1',
+      topic: 'RESCHEDULE_ALL.V1',
+    },
+    () => assert.fail(),
+    () => assert.pass('reschedule #1'),
+  )
+
+  const keys = await context.keys()
+  const tweet1 = await context.get<Tweet>(keys[0]!)
+  const tweet2 = await context.get<Tweet>(keys[1]!)
+
+  await input(
+    {
+      _msgid: '1',
+      topic: 'PUBLISHED.V1',
+      payload: { tweetId: 't1', id: `${tweet1.id}#${Object.keys(tweet1.variations)[0]}` },
+    },
+    () => assert.fail(),
+    () => assert.pass(),
+  )
+
+  await input(
+    {
+      _msgid: '1',
+      topic: 'PUBLISHED.V1',
+      payload: { tweetId: 't1', id: `${tweet2.id}#${Object.keys(tweet2.variations)[0]}` },
+    },
+    () => assert.fail(),
+    () => assert.pass(),
+  )
+
+  await input(
+    {
+      _msgid: '1',
+      topic: 'RESCHEDULE_ALL.V1',
+    },
+    () => assert.fail(),
+    () => assert.pass('reschedule #2'),
+  )
+
+  await input(
+    {
+      _msgid: '1',
+      topic: 'TICK.V1',
+      payload: new Date('2021-02-10T12:30:00.000Z').valueOf(),
+    },
+    (event) => {
+      assert.equal(event.payload.text, '5')
+    },
+    () => assert.pass(),
+  )
+
+  assert.end()
+})
+
 class MockContext {
   private cache = new Map<string, unknown>()
   async set<T = unknown>(key: string, value?: T) {
