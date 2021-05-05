@@ -156,25 +156,27 @@ export function Setup({
             continue
           }
 
-          const firstValidVariation = Object.values(tweet.variations).find((it) => !isPublishedVariation(it)) as
-            | UnscheduledVariation
-            | ScheduledVariation
+          const [firstValidVariation, ...remainingVariations] = Object.values(tweet.variations).filter(
+            (it) => !isPublishedVariation(it),
+          ) as Array<UnscheduledVariation | ScheduledVariation>
 
-          const previousScheduledTime = firstValidVariation.publishedAt
           const nextSlot = rrule.after(previousDate)
-
           previousDate = nextSlot
 
           await context.set<Tweet>(key, {
             ...tweet,
             variations: {
               ...tweet.variations,
-              [firstValidVariation.id]: scheduleVariation(firstValidVariation, nextSlot, node),
+              [firstValidVariation!.id]: scheduleVariation(firstValidVariation!, nextSlot, node),
+              ...remainingVariations.reduce((acc, it) => {
+                acc[it.id] = unscheduleVariation(it, node)
+                return acc
+              }, {} as Record<string, UnscheduledVariation | PublishedVariation>),
             },
           })
           counter++
 
-          node.log(`Rescheduled tweet ${key} from ${previousScheduledTime ?? 'no slot'} to ${nextSlot}`)
+          node.log(`Rescheduled tweet ${key} to ${nextSlot}`)
         }
 
         node.status({ fill: 'green', shape: 'dot', text: `Reschedule ${counter} tweets. ${time()}` })
@@ -378,6 +380,31 @@ function publishVariation(
       return publishedVariation
     case 'scheduled-variation':
       return publishedVariation
+    default:
+      throw new Error('I did not expect this')
+  }
+}
+
+function unscheduleVariation(
+  variation: UnscheduledVariation | ScheduledVariation | PublishedVariation,
+  node: Node,
+): UnscheduledVariation | PublishedVariation {
+  const unscheduledVariation = {
+    ...variation,
+    type: 'unscheduled-variation' as const,
+    scheduleAt: null,
+    tweetId: null,
+    publishedAt: null,
+  }
+
+  switch (variation.type) {
+    case 'published-variation':
+      node.warn(`You can't unschedule a published variation ${variation.id}. Skipping.`)
+      return variation
+    case 'scheduled-variation':
+      return unscheduledVariation
+    case 'unscheduled-variation':
+      return unscheduledVariation
     default:
       throw new Error('I did not expect this')
   }

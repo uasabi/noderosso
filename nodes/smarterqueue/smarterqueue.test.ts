@@ -253,7 +253,7 @@ test('it should gc', async (assert) => {
   assert.end()
 })
 
-test('it should reschedule all', async (assert) => {
+test('it should reschedule all in order', async (assert) => {
   assert.plan(9)
 
   const context = new MockContext()
@@ -345,6 +345,87 @@ test('it should reschedule all', async (assert) => {
     },
     () => assert.pass(),
   )
+
+  assert.end()
+})
+
+test('it should reschedule and reset', async (assert) => {
+  assert.plan(5)
+
+  const context = new MockContext()
+  const input = Setup({
+    node: { log: noop, error: noop, warn: noop, status: noop } as any,
+    context,
+    rrule: rrulestr('DTSTART:20180101T120000Z\nRRULE:FREQ=DAILY;INTERVAL=1;WKST=MO;BYDAY=MO,TU,WE'),
+    circuitBreakerMaxEmit: 2,
+    newDate: () => new Date('2021-02-09T12:00:00.000Z'),
+  })
+  await context.set<Tweet>('1', {
+    id: '1',
+    createdAt: '2021-02-09T12:00:00.000Z',
+    variations: {
+      '1-1': {
+        id: '1-1',
+        type: 'scheduled-variation',
+        text: '1-1',
+        images: [],
+        publishedAt: null,
+        tweetId: null,
+        scheduleAt: 'now',
+      },
+      '1-2': {
+        id: '1-2',
+        type: 'scheduled-variation',
+        text: '1-2',
+        images: [],
+        publishedAt: null,
+        tweetId: null,
+        scheduleAt: 'now+1',
+      },
+    },
+  })
+  await context.set<Tweet>('2', {
+    id: '2',
+    createdAt: '2021-02-09T13:00:00.000Z',
+    variations: {
+      '2-1': {
+        id: '2-1',
+        type: 'scheduled-variation',
+        text: '2-1',
+        images: [],
+        publishedAt: null,
+        tweetId: null,
+        scheduleAt: 'now+2',
+      },
+      '2-2': {
+        id: '2-2',
+        type: 'scheduled-variation',
+        text: '2-2',
+        images: [],
+        publishedAt: null,
+        tweetId: null,
+        scheduleAt: 'now+3',
+      },
+    },
+  })
+
+  await input(
+    {
+      _msgid: '1',
+      topic: 'RESCHEDULE_ALL.V1',
+    },
+    () => assert.fail(),
+    () => assert.pass('reschedule #1'),
+  )
+
+  const keys = await context.keys()
+  const tweet1 = await context.get<Tweet>(keys[0]!)
+  const tweet2 = await context.get<Tweet>(keys[1]!)
+
+  assert.equal(Object.values(tweet1.variations)[0]!.type, 'scheduled-variation')
+  assert.equal(Object.values(tweet1.variations)[1]!.type, 'unscheduled-variation')
+  assert.equal(Object.values(tweet2.variations)[0]!.type, 'scheduled-variation')
+  assert.equal(Object.values(tweet2.variations)[1]!.type, 'unscheduled-variation')
 
   assert.end()
 })
