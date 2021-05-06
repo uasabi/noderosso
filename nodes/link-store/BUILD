@@ -18,7 +18,6 @@ node(
         "//nodes:axios",
         "//nodes:worker_node",
         "//types",
-        "@npm//@types/human-interval",
         "@npm//@types/node",
         "@npm//hast-util-raw",
         "@npm//hast-util-select",

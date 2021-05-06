@@ -55,7 +55,7 @@ export function Setup({
         }
 
         try {
-          await sendgrid.send(payload)
+          await sendgrid.send(payload as any) // see https://github.com/sendgrid/sendgrid-nodejs/issues/1166
           node.log(`Sent email ${payload.subject ?? 'No subject'} to ${payload.to.join(',')}`)
           node.status({
             fill: 'green',

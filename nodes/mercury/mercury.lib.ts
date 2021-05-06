@@ -355,6 +355,7 @@ async function extractContent(
   const browser = await puppeteer.connect({ browserWSEndpoint: 'ws://localhost:3000' })
   try {
     const page = await browser.newPage()
+    await page.setBypassCSP(true)
     await page.goto(url, { waitUntil: 'networkidle0' })
     const res = (await page.evaluate(`(() => {
       ${script}

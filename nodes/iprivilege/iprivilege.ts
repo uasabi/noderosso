@@ -102,51 +102,53 @@ module.exports = function (RED: Red) {
     )
   })
 
-  RED.httpAdmin.post(`/iprivilege/:id`, json(), urlencoded({ extended: true }), async function (
-    req: Request,
-    res: Response,
-  ) {
-    const nodeId = req.params.id ?? ''
-    const node = RED.nodes.getNode<Node>(nodeId)
+  RED.httpAdmin.post(
+    `/iprivilege/:id`,
+    json(),
+    urlencoded({ extended: true }),
+    async function (req: Request, res: Response) {
+      const nodeId = req.params.id ?? ''
+      const node = RED.nodes.getNode<Node>(nodeId)
 
-    if (!node) {
-      return res.redirect(`/admin/iprivilege/${nodeId}`)
-    }
-
-    if (hasOwnProperty(req.body, 'submit')) {
-      const date = parseDate(req.body.date) as Date | null
-
-      if (!date) {
+      if (!node) {
         return res.redirect(`/admin/iprivilege/${nodeId}`)
       }
 
-      node.receive({
-        topic: 'BOOK.V1',
-        payload: {
-          date: req.body.date,
-        },
-      })
-    }
+      if (hasOwnProperty(req.body, 'submit')) {
+        const date = parseDate(req.body.date) as Date | null
 
-    if (hasOwnProperty(req.body, 'delete')) {
-      const bookingId = req.body.id
+        if (!date) {
+          return res.redirect(`/admin/iprivilege/${nodeId}`)
+        }
 
-      if (!isString(bookingId)) {
-        return res.redirect(`/admin/iprivilege/${nodeId}`)
+        node.receive({
+          topic: 'BOOK.V1',
+          payload: {
+            date: req.body.date,
+          },
+        })
       }
 
-      node.receive({
-        topic: 'CANCEL.V1',
-        payload: {
-          bookingId,
-        },
-      })
-    }
+      if (hasOwnProperty(req.body, 'delete')) {
+        const bookingId = req.body.id
 
-    setTimeout(() => {
-      res.redirect(`/admin/iprivilege/${nodeId}`)
-    }, 500)
-  })
+        if (!isString(bookingId)) {
+          return res.redirect(`/admin/iprivilege/${nodeId}`)
+        }
+
+        node.receive({
+          topic: 'CANCEL.V1',
+          payload: {
+            bookingId,
+          },
+        })
+      }
+
+      setTimeout(() => {
+        res.redirect(`/admin/iprivilege/${nodeId}`)
+      }, 500)
+    },
+  )
 }
 
 function hasOwnProperty<X extends {}, Y extends PropertyKey>(obj: X, prop: Y): obj is X & Record<Y, unknown> {

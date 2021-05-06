@@ -17,7 +17,6 @@ node(
         "//nodes:worker_node",
         "//types",
         "@npm//@types/express",
-        "@npm//@types/human-interval",
         "@npm//@types/node",
         "@npm//chrono-node",
         "@npm//date-fns",

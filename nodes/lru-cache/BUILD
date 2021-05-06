@@ -13,7 +13,6 @@ node(
     deps = [
         "//nodes:worker_node",
         "//types",
-        "@npm//@types/human-interval",
         "@npm//@types/node",
         "@npm//human-interval",
         "@npm//node-red",

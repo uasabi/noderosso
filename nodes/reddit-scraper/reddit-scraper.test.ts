@@ -4,9 +4,9 @@ import { join } from 'path'
 import { RedditNestable, RedditResponse, extractReplies, fetchPost } from './reddit-scraper.lib'
 import { Server, createServer } from 'http'
 
-const fixtureReplies = JSON.parse(readFileSync(join(__dirname, 'fixture.json'), 'utf-8')) as RedditNestable<
-  RedditResponse
->[]
+const fixtureReplies = JSON.parse(
+  readFileSync(join(__dirname, 'fixture.json'), 'utf-8'),
+) as RedditNestable<RedditResponse>[]
 const fixtureArticle = readFileSync(join(__dirname, 'fixture-article.json'), 'utf-8')
 const fixtureSelf = readFileSync(join(__dirname, 'fixture-self.json'), 'utf-8')
 

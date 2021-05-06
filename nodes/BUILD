@@ -31,7 +31,6 @@ ts_library(
     name = "axios",
     srcs = [":axios_files"],
     deps = [
-        "@npm//@types/human-interval",
         "@npm//@types/node",
         "@npm//axios",
         "@npm//human-interval",

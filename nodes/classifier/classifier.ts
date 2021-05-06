@@ -109,33 +109,35 @@ module.exports = function (RED: Red) {
     )
   })
 
-  RED.httpAdmin.post(`/classifier/:node/document/:id`, json(), urlencoded({ extended: true }), async function (
-    req: Request,
-    res: Response,
-  ) {
-    const nodeId = req.params.node
-    const documentId = req.params.id
-    const node = RED.nodes.getNode<ClassifierNode>(nodeId ?? '')
-    if (!node || !documentId) {
-      return res.redirect(`/admin/classifier/${nodeId}`)
-    }
-    const context = asyncContext(node.context())
+  RED.httpAdmin.post(
+    `/classifier/:node/document/:id`,
+    json(),
+    urlencoded({ extended: true }),
+    async function (req: Request, res: Response) {
+      const nodeId = req.params.node
+      const documentId = req.params.id
+      const node = RED.nodes.getNode<ClassifierNode>(nodeId ?? '')
+      if (!node || !documentId) {
+        return res.redirect(`/admin/classifier/${nodeId}`)
+      }
+      const context = asyncContext(node.context())
 
-    if (hasOwnProperty(req.body, 'delete')) {
-      await context.set(documentId)
-      return res.redirect(`/admin/classifier/${nodeId}`)
-    }
+      if (hasOwnProperty(req.body, 'delete')) {
+        await context.set(documentId)
+        return res.redirect(`/admin/classifier/${nodeId}`)
+      }
 
-    const currentCategory = `${(req.body as any).category}`.trim()
-    node.receive({
-      topic: 'ADD_CLASSIFICATION.V1',
-      payload: {
-        documentId,
-        category: currentCategory,
-      },
-    })
-    res.redirect(`/admin/classifier/${nodeId}`)
-  })
+      const currentCategory = `${(req.body as any).category}`.trim()
+      node.receive({
+        topic: 'ADD_CLASSIFICATION.V1',
+        payload: {
+          documentId,
+          category: currentCategory,
+        },
+      })
+      res.redirect(`/admin/classifier/${nodeId}`)
+    },
+  )
 }
 
 function isString(value: unknown): value is string {

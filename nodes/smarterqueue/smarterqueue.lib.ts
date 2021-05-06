@@ -342,7 +342,7 @@ function scheduleVariation(
       node.warn(`Scheduled an already published variation ${variation.id}. Skipping.`)
       return variation
     case 'scheduled-variation':
-      node.warn(`Scheduled an already scheduled variation ${variation.id}. Before ${variation.scheduleAt}, now ${at}.`)
+      node.log(`Scheduled an already scheduled variation ${variation.id}. Before ${variation.scheduleAt}, now ${at}.`)
       return scheduledVariation
     case 'unscheduled-variation':
       return scheduledVariation
