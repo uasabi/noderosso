@@ -2,42 +2,21 @@ import humanInterval from 'human-interval'
 import { Node } from 'node-red'
 import RRule, { RRuleSet } from 'rrule'
 import { AsyncContext } from '../context'
-import { Actions, Events, Event } from './smarterqueue.common'
+import {
+  Actions,
+  Events,
+  Event,
+  UnscheduledVariation,
+  ScheduledVariation,
+  PublishedVariation,
+  isPublishedVariation,
+  isScheduledVariation,
+} from './smarterqueue.common'
 
 export interface Tweet {
   id: string
   createdAt: string
   variations: Record<string, UnscheduledVariation | ScheduledVariation | PublishedVariation>
-}
-
-interface ScheduledVariation {
-  type: 'scheduled-variation'
-  id: string
-  text: string
-  images: string[]
-  publishedAt: null
-  tweetId: null
-  scheduleAt: string
-}
-
-interface UnscheduledVariation {
-  type: 'unscheduled-variation'
-  id: string
-  text: string
-  images: string[]
-  publishedAt: null
-  tweetId: null
-  scheduleAt: null
-}
-
-interface PublishedVariation {
-  type: 'published-variation'
-  id: string
-  text: string
-  images: string[]
-  publishedAt: string
-  tweetId: string
-  scheduleAt: null
 }
 
 export function Setup({
@@ -65,26 +44,17 @@ export function Setup({
         return done()
       }
       case 'QUEUE.V1': {
-        const id = generateId()
+        const id = action.payload.id ?? generateId()
 
         await context.set<Tweet>(id, {
           id,
           variations: action.payload.variations.reduce((acc, it) => {
-            const id = generateId()
             return {
               ...acc,
-              [id]: <UnscheduledVariation>{
-                type: 'unscheduled-variation' as const,
-                id,
-                text: it.text,
-                images: it.images,
-                publishedAt: null,
-                tweetId: null,
-                scheduleAt: null,
-              },
+              [it.id]: it,
             }
-          }, {} as Record<string, UnscheduledVariation>),
-          createdAt: new Date().toISOString(),
+          }, {} as Record<string, UnscheduledVariation | ScheduledVariation | PublishedVariation>),
+          createdAt: action.payload.createdAt ?? new Date().toISOString(),
         })
 
         node.status({ fill: 'green', shape: 'dot', text: `Added tweet ${id} ${time()}` })
@@ -285,6 +255,28 @@ export function Setup({
         node.log(`Purged ${counter} tweets`)
         return done()
       }
+      case 'DUMP.V1': {
+        const tweets = []
+        const keys = await context.keys()
+
+        for (const key of keys) {
+          const tweet = await context.get<Tweet>(key)
+
+          if (!tweet) {
+            continue
+          }
+
+          tweets.push({
+            id: tweet.id,
+            createdAt: tweet.createdAt,
+            variations: Object.values(tweet.variations),
+          })
+        }
+
+        send(Event.state({ tweets }))
+        node.log(`Exported state`)
+        return done()
+      }
       default:
         assertUnreachable(action)
         break
@@ -304,24 +296,6 @@ function generateId() {
 
 function uuid() {
   return Math.random().toString(36).substring(7)
-}
-
-function isScheduledVariation(
-  variation: UnscheduledVariation | ScheduledVariation | PublishedVariation,
-): variation is ScheduledVariation {
-  return variation.type === 'scheduled-variation'
-}
-
-function isUnscheduledVariation(
-  variation: UnscheduledVariation | ScheduledVariation | PublishedVariation,
-): variation is UnscheduledVariation {
-  return variation.type === 'unscheduled-variation'
-}
-
-function isPublishedVariation(
-  variation: UnscheduledVariation | ScheduledVariation | PublishedVariation,
-): variation is PublishedVariation {
-  return variation.type === 'published-variation'
 }
 
 function scheduleVariation(
