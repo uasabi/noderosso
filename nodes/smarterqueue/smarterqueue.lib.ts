@@ -49,9 +49,10 @@ export function Setup({
         await context.set<Tweet>(id, {
           id,
           variations: action.payload.variations.reduce((acc, it) => {
+            const id = it.id ?? generateId()
             return {
               ...acc,
-              [it.id]: it,
+              [id]: { ...it, id },
             }
           }, {} as Record<string, UnscheduledVariation | ScheduledVariation | PublishedVariation>),
           createdAt: action.payload.createdAt ?? new Date().toISOString(),
@@ -137,9 +138,9 @@ export function Setup({
             ...tweet,
             variations: {
               ...tweet.variations,
-              [firstValidVariation!.id]: scheduleVariation(firstValidVariation!, nextSlot, node),
+              [firstValidVariation!.id!]: scheduleVariation(firstValidVariation!, nextSlot, node),
               ...remainingVariations.reduce((acc, it) => {
-                acc[it.id] = unscheduleVariation(it, node)
+                acc[it.id!] = unscheduleVariation(it, node)
                 return acc
               }, {} as Record<string, UnscheduledVariation | PublishedVariation>),
             },

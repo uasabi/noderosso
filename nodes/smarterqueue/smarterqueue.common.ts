@@ -7,9 +7,7 @@ const UnscheduledVariationSchema = z.object({
   id: z
     .string()
     .optional()
-    .transform((it) => {
-      return (it?.trim().length ?? 0) > 0 ? it!.trim() : generateId()
-    }),
+    .transform((it) => it?.trim()),
   type: z
     .literal('unscheduled-variation')
     .optional()
@@ -183,12 +181,4 @@ export const events = Schema.publish
 export type Events = ReturnType<typeof Event[keyof typeof Event]>
 export function isEvent(event: unknown): event is Events {
   return events.safeParse(event).success
-}
-
-function generateId() {
-  return `${Date.now()}-${uuid()}`
-}
-
-function uuid() {
-  return Math.random().toString(36).substring(7)
 }

@@ -6,15 +6,15 @@ import { setTimeout } from 'timers'
 export function WorkerNode<Actions, Events>({
   node,
   fn,
-  isAction,
+  isAction = (action: unknown): action is Actions => !!action,
   isEvent,
   liftAction,
 }: {
   node: Node
   fn: (action: Actions, send: (event: Events) => void, done: () => void) => void | Promise<void>
-  isAction: (action: unknown) => action is Actions
+  isAction?: (action: unknown) => action is Actions
   isEvent: (event: unknown) => event is Events
-  liftAction: (value: unknown) => Actions
+  liftAction: (value: unknown) => Actions | undefined
 }) {
   type QueueItem = [Actions, (events: Events) => void, () => void]
   const channel = new Channel()

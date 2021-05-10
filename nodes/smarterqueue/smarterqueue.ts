@@ -1,6 +1,6 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './smarterqueue.lib'
-import { isAction, upgradeAction, isEvent } from './smarterqueue.common'
+import { isEvent, actions } from './smarterqueue.common'
 import { WorkerNode } from '../worker-node'
 import { asyncContext } from '../context'
 import RRule, { RRuleSet, rrulestr } from 'rrule'
@@ -25,10 +25,22 @@ module.exports = function (RED: Red) {
 
     WorkerNode({
       fn: Setup({ node, context, rrule, circuitBreakerMaxEmit, newDate: () => new Date() }),
-      isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      liftAction: (action: unknown) => {
+        const validate = actions.safeParse(action)
+
+        if (!validate.success) {
+          const { fieldErrors, formErrors } = validate.error.flatten()
+          const errorMessages = Object.keys(fieldErrors).map((it) => {
+            return `${it}: ${fieldErrors[it]!.join(', ')}`
+          })
+          node.error([...errorMessages, formErrors].join('\n'))
+          return undefined
+        } else {
+          return validate.data
+        }
+      },
     })
   }
   RED.nodes.registerType('smarterqueue', SmarterQueue)
