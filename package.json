@@ -33,7 +33,7 @@
     "node-red-contrib-rss": "^0.1.5",
     "node-red-contrib-sendgrid": "^0.2.1",
     "node-red-contrib-telegrambot": "^9.4.0",
-    "normalize-url": "^6.0.0",
+    "normalize-url": "^6.0.1",
     "pg": "^8.3.0",
     "puppeteer-core": "^9.1.1",
     "puppeteer-extra": "^3.1.18",
