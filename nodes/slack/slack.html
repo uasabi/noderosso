@@ -1,0 +1,66 @@
+<script type="text/javascript">
+  RED.nodes.registerType('slack', {
+    category: 'test',
+    color: '#a6bbcf',
+    defaults: {
+      name: { value: '' },
+      slack_account: { value: '', type: 'Slack account', required: true },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: 'file.png',
+    label: function () {
+      return this.name || 'Slack'
+    },
+  })
+</script>
+
+<script type="text/html" data-template-name="slack">
+  <div class="form-row">
+      <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+      <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-slack_account"><i class="fa fa-lock"></i> Slack account</label>
+    <input type="input" id="node-input-slack_account" placeholder="Slack Account">
+  </div>
+</script>
+
+<script type="text/html" data-help-name="slack">
+  <p>Slack node that can send message to certain channel.</p>
+</script>
+
+<script type="text/javascript">
+  RED.nodes.registerType('Slack account', {
+    category: 'config',
+    defaults: {
+      name: { value: '', required: true },
+      account_name: { value: '', required: true },
+    },
+    credentials: {
+      account_password: { type: 'password', required: true },
+    },
+    label: function () {
+      return this.account_name || 'No account name';
+    },
+  });
+</script>
+
+<script type="text/html" data-template-name="Slack account">
+  <div class="form-row">
+    <label for="node-config-input-name"><i class="icon-tag"></i> Name</label>
+    <input type="text" id="node-config-input-name" placeholder="Name">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-account_name"><i class="icon-tag"></i>Account Name</label>
+    <input type="input" id="node-config-input-account_name" placeholder="Account Name">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-account_password"><i class="fa fa-lock"></i>Account Password</label>
+    <input type="password" id="node-config-input-account_password" placeholder="Account Password">
+  </div>
+</script>
+
+<script type="text/html" data-help-name="Slack account">
+  <p>A configuration node that holds the credentials for Slack.</p>
+</script>

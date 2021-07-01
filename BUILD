@@ -25,6 +25,7 @@ NODES = [
     "//nodes/tweet-importer",
     "//nodes/web-watcher",
     "//nodes/wordpress-scraper",
+    "//nodes/slack",
 ]
 
 NODE_RED_PACKAGES = [
