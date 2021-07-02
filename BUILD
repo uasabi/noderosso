@@ -93,5 +93,6 @@ test_suite(
     tests = [
         "//nodes:tslint",
         "//summarice:summarice_test",
+        "//workers:tslint",
     ] + ["{}:test".format(n) for n in NODES] + ["{}:tslint".format(n) for n in NODES],
 )

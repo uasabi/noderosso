@@ -10,3 +10,5 @@ types/*.js
 types/*.js.map
 .flows_cred.json.backup
 bazel-*
+workers/*.js
+!workers/rollup.config.js
