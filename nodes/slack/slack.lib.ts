@@ -75,7 +75,7 @@ export function Setup(setupArg: SetupArg) {
           })
         } catch (e) {
           browser?.disconnect()
-          const message = [`Error writing message to channelLink ${channelLink}`, e].join('\n')
+          const message = [`Error writing message to channelLink ${channelLink}`, JSON.stringify(e)].join('\n')
 
           send(Event.failed({ message }))
 
@@ -86,6 +86,7 @@ export function Setup(setupArg: SetupArg) {
         return done()
       }
       default:
+        done()
         break
     }
   }

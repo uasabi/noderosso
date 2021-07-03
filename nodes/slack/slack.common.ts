@@ -6,7 +6,7 @@ const Schema = {
   send: Message.extend({
     topic: z.literal('SEND.V1'),
     payload: z.object({
-      channelLink: z.string().nonempty(),
+      channelLink: z.string().url().nonempty(),
       message: z.string().nonempty(),
     }),
   }),
