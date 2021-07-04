@@ -41,7 +41,7 @@ nodejs_test(
 
 js_library(
     name = "summarice",
-    package_name = "@noderosso/summarice",
+    package_name = "@noderosso/packages/summarice",
     srcs = [],
     visibility = ["//visibility:public"],
     deps = [":summarice_lib"],

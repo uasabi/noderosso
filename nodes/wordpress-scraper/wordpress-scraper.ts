@@ -1,7 +1,7 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './wordpress-scraper.lib'
 import { isAction, upgradeAction, isEvent } from './wordpress-scraper.common'
-import { WorkerNode } from '../worker-node'
+import { WorkerNode } from '@noderosso/packages/worker_node'
 import { URL } from 'url'
 
 module.exports = function (RED: Red) {

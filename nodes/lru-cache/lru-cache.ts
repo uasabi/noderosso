@@ -1,9 +1,9 @@
 import humanInterval from 'human-interval'
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './lru-cache.lib'
-import { asyncContext } from '../context'
+import { asyncContext } from '@noderosso/packages/context'
 import { upgradeAction, isAction, isEvent } from './lru-cache.common'
-import { WorkerNode } from '../worker-node'
+import { WorkerNode } from '@noderosso/packages/worker_node'
 
 module.exports = function (RED: Red) {
   function LRUCache(this: Node, config: NodeProperties & { ttl: unknown; dedupeField: unknown }) {

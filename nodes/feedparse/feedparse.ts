@@ -1,10 +1,10 @@
 import url from 'url'
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './feedparse.lib'
-import { asyncContext } from '../context'
+import { asyncContext } from '@noderosso/packages/context'
 import humanInterval from 'human-interval'
 import { isEvent, upgradeAction, isAction } from './feedparse.common'
-import { WorkerNode } from '../worker-node'
+import { WorkerNode } from '@noderosso/packages/worker_node'
 
 module.exports = function (RED: Red) {
   function FeedParseNode(this: Node, config: NodeProperties & { url: string; ttl: string }) {

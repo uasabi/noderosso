@@ -1,7 +1,7 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './reddit-scraper.lib'
 import { isAction, upgradeAction, isEvent } from './reddit-scraper.common'
-import { WorkerNode } from '../worker-node'
+import { WorkerNode } from '@noderosso/packages/worker_node'
 
 module.exports = function (RED: Red) {
   function RedditScraperNode(

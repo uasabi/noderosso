@@ -1,6 +1,6 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './imap-reader.lib'
-import { WorkerNode } from '../worker-node'
+import { WorkerNode } from '@noderosso/packages/worker_node'
 import { isEvent, upgradeAction, isAction } from './imap-reader.common'
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'

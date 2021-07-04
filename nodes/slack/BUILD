@@ -12,14 +12,13 @@ node(
         "@npm//tape",
     ],
     deps = [
-        "//nodes:axios",
-        "//nodes:worker_node",
+        "//packages/axios",
+        "//packages/worker_node",
+        "//packages/puppeteer",
         "//types",
         "@npm//@types/node",
         "@npm//axios",
         "@npm//node-red",
-        "@npm//puppeteer-core",
-        "@npm//puppeteer-extra",
         "@npm//zod",
     ],
 )

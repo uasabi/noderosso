@@ -11,7 +11,8 @@ node(
         "@npm//tape",
     ],
     deps = [
-        "//nodes:worker_node",
+        "//packages/worker_node",
+        "//packages/context",
         "//types",
         "@npm//@types/mailparser",
         "@npm//@types/node",

@@ -1,8 +1,8 @@
 import { Node } from 'node-red'
 import { trainingWorker } from './classifier.worker'
 import { Worker } from 'worker_threads'
-import { AsyncContext } from '../context'
-import { Channel, Loop } from '../channel'
+import { AsyncContext } from '@noderosso/packages/context'
+import { Channel, Loop } from '@noderosso/packages/channel'
 import {
   DocumentRecord,
   documentRecord,

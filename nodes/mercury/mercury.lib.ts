@@ -5,18 +5,13 @@ import { Node } from 'node-red'
 import { Actions, Events, Event } from './mercury.common'
 import { inspect } from 'util'
 import { URL } from 'url'
-import { axios, prettyAxiosErrors } from '../axios'
-import { summarice } from '@noderosso/summarice'
+import { axios, prettyAxiosErrors } from '@noderosso/packages/axios'
+import { summarice } from '@noderosso/packages/summarice'
 import * as Hast from 'hast'
 import * as chrono from 'chrono-node'
-import puppeteer from 'puppeteer-extra'
-import StealthPlugin from 'puppeteer-extra-plugin-stealth'
-import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker'
+import { connect } from '@noderosso/packages/puppeteer'
 
 import { promises } from 'fs'
-
-puppeteer.use(StealthPlugin())
-puppeteer.use(AdblockerPlugin({ blockTrackers: true }))
 
 let readabilityScript: Promise<string | null> = Promise.resolve(null)
 
@@ -352,7 +347,7 @@ async function extractContent(
     return { content: undefined, contentAsText: undefined }
   }
 
-  const browser = await puppeteer.connect({ browserWSEndpoint: 'ws://localhost:3000' })
+  const browser = await connect()
   try {
     const page = await browser.newPage()
     await page.setBypassCSP(true)

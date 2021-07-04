@@ -1,7 +1,7 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './my-first-node.lib'
 import { isAction, upgradeAction, isEvent } from './my-first-node.common'
-import { WorkerNode } from '../worker-node'
+import { WorkerNode } from '@noderosso/packages/worker_node'
 
 module.exports = function (RED: Red) {
   function MyFirstNode(this: Node, config: NodeProperties) {

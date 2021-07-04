@@ -3,7 +3,7 @@ node_modules/
 .config.json.backup
 .flows.json.backup
 flows_cred.json
-context/
+/context
 nodes/*.js
 nodes/*.js.map
 types/*.js

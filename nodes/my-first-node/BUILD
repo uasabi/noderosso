@@ -12,7 +12,7 @@ node(
         "@npm//tape",
     ],
     deps = [
-        "//nodes:worker_node",
+        "//packages/worker_node",
         "//types",
         "@npm//@types/node",
         "@npm//node-red",

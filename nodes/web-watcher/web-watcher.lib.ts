@@ -1,5 +1,5 @@
 import { Node } from 'node-red'
-import { AsyncContext } from '../context'
+import { AsyncContext } from '@noderosso/packages/context'
 import hastParser from 'hast-util-raw'
 import { select } from 'hast-util-select'
 import toHtml from 'hast-util-to-html'
@@ -7,7 +7,7 @@ import Hast from 'hast'
 import { Actions, Events, Event } from './web-watcher.common'
 import { inspect } from 'util'
 import { URL } from 'url'
-import { axios, prettyAxiosErrors, AxiosResponse } from '../axios'
+import { axios, prettyAxiosErrors, AxiosResponse } from '@noderosso/packages/axios'
 
 export function Setup({
   context,

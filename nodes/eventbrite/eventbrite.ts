@@ -1,7 +1,7 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './eventbrite.lib'
 import { upgradeAction, isAction, isEvent } from './eventbrite.common'
-import { WorkerNode } from '../worker-node'
+import { WorkerNode } from '@noderosso/packages/worker_node'
 import Axios from 'axios'
 
 module.exports = function (RED: Red) {
