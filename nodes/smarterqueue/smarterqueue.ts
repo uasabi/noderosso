@@ -24,7 +24,7 @@ module.exports = function (RED: Red) {
       isString(config.failsafe) && isNumber(parseInt(config.failsafe, 10)) ? parseInt(config.failsafe, 10) : 2
 
     WorkerNode({
-      fn: Setup({ node, context, rrule, circuitBreakerMaxEmit, newDate: () => new Date() }),
+      fn: Setup({ node, context, rrule, circuitBreakerMaxEmit, newDate: () => new Date(), config }),
       isEvent,
       node,
       liftAction: (action: unknown) => {

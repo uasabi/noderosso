@@ -1,6 +1,7 @@
 import humanInterval from 'human-interval'
-import { Node } from 'node-red'
+import { Node, NodeProperties } from 'node-red'
 import RRule, { RRuleSet } from 'rrule'
+import * as chrono from 'chrono-node'
 import { AsyncContext } from '../context'
 import {
   Actions,
@@ -25,12 +26,14 @@ export function Setup({
   rrule,
   circuitBreakerMaxEmit,
   newDate,
+  config,
 }: {
   node: Node
   context: AsyncContext
   rrule: RRule | RRuleSet
   circuitBreakerMaxEmit: number
   newDate: () => Date
+  config?: NodeProperties & { slots?: string; failsafe?: string; rrule?: string }
 }) {
   return async (action: Actions, send: (event: Events) => void, done: () => void) => {
     switch (action.topic) {
@@ -276,6 +279,41 @@ export function Setup({
 
         send(Event.state({ tweets }))
         node.log(`Exported state`)
+        return done()
+      }
+      case 'REQUEST_REPORT.V1': {
+        let timestamp: string = ''
+        if (!action.payload.timestamp) {
+          timestamp = `${Date.now()}`
+        }
+        if (typeof action.payload.timestamp === 'number') {
+          timestamp = `${action.payload.timestamp}`
+        }
+        if (typeof action.payload.timestamp === 'string') {
+          timestamp = action.payload.timestamp
+        }
+        const parsedTimestamp = chrono.parseDate(timestamp)
+
+        if (config && config.rrule) {
+          const pendings = RRule.fromString(config.rrule)
+            .all()
+            .filter((date) => date > parsedTimestamp)
+          const lastSchedule = RRule.fromString(config.rrule).all().pop()?.toISOString()
+
+          if (!lastSchedule) {
+            node.error('Failed to get last scheduled item')
+            return done()
+          }
+
+          send(
+            Event.report({
+              itemsPending: pendings.length,
+              lastScheduledItem: lastSchedule,
+            }),
+          )
+        } else {
+          node.error('No rrule was defined')
+        }
         return done()
       }
       default:

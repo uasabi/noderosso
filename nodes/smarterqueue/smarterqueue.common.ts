@@ -129,12 +129,25 @@ const Schema = {
   dump: Message.extend({
     topic: z.literal('DUMP.V1'),
   }),
+  requestReport: z.object({
+    topic: z.literal('REQUEST_REPORT.V1'),
+    payload: z.object({
+      timestamp: z.union([z.string(), z.number()]).optional(),
+    }),
+  }),
   publish: z.object({
     topic: z.literal('PUBLISH.V1'),
     payload: z.object({
       id: z.string().nonempty(),
       text: z.string().nonempty(),
       images: z.array(z.string().url()).max(4),
+    }),
+  }),
+  report: z.object({
+    topic: z.literal('REPORT.V1'),
+    payload: z.object({
+      itemsPending: z.number(),
+      lastScheduledItem: z.string(),
     }),
   }),
   state: z.object({
@@ -159,6 +172,7 @@ export const actions = z.union([
   Schema.published,
   Schema.gc,
   Schema.dump,
+  Schema.requestReport,
 ])
 export type Actions = z.infer<typeof actions>
 export function isAction(action: unknown): action is Actions {
@@ -175,9 +189,12 @@ export const Event = {
   state(args: Omit<z.infer<typeof Schema.state>, 'topic'>['payload']): z.infer<typeof Schema.state> {
     return { topic: 'STATE.V1' as const, payload: args }
   },
+  report(args: Omit<z.infer<typeof Schema.report>, 'topic'>['payload']): z.infer<typeof Schema.report> {
+    return { topic: 'REPORT.V1' as const, payload: args }
+  },
 }
 
-export const events = Schema.publish
+export const events = z.union([Schema.publish, Schema.report])
 export type Events = ReturnType<typeof Event[keyof typeof Event]>
 export function isEvent(event: unknown): event is Events {
   return events.safeParse(event).success
