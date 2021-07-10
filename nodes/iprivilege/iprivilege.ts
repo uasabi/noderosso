@@ -3,7 +3,7 @@ import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './iprivilege.lib'
 import { asyncContext } from '../context'
 import { WorkerNode } from '../worker-node'
-import { isEvent, isAction, upgradeAction } from './iprivilege.common'
+import { isEvent, isAction, actions } from './iprivilege.common'
 import { urlencoded, json, Request, Response } from 'express'
 import { readFileSync } from 'fs'
 import { join } from 'path'
@@ -37,7 +37,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
 

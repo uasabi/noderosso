@@ -1,6 +1,6 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './postgres.lib'
-import { upgradeAction, isAction, isEvent } from './postgres.common'
+import { actions, isAction, isEvent } from './postgres.common'
 import { WorkerNode } from '../worker-node'
 
 module.exports = function (RED: Red) {
@@ -15,7 +15,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
   RED.nodes.registerType('postgres', Postgres, {

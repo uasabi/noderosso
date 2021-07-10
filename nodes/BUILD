@@ -19,6 +19,7 @@ ts_library(
         "//types",
         "@npm//@types/node",
         "@npm//node-red",
+        "@npm//zod",
     ],
 )
 

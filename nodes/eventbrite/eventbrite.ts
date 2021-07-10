@@ -1,6 +1,6 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './eventbrite.lib'
-import { upgradeAction, isAction, isEvent } from './eventbrite.common'
+import { isAction, isEvent, actions } from './eventbrite.common'
 import { WorkerNode } from '../worker-node'
 import Axios from 'axios'
 
@@ -34,7 +34,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
   RED.nodes.registerType('eventbrite', Postgres, {

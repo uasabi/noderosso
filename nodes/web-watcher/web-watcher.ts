@@ -3,7 +3,7 @@ import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './web-watcher.lib'
 import { asyncContext } from '../context'
 import { WorkerNode } from '../worker-node'
-import { isEvent, isAction, upgradeAction } from './web-watcher.common'
+import { isEvent, isAction, actions } from './web-watcher.common'
 
 module.exports = function (RED: Red) {
   function WebWatcher(this: Node, config: NodeProperties & { url: string; selector: string }) {
@@ -28,7 +28,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
 

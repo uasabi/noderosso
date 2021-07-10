@@ -1,6 +1,6 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './twitter.lib'
-import { isAction, upgradeAction, isEvent } from './twitter.common'
+import { isAction, actions, isEvent } from './twitter.common'
 import { WorkerNode } from '../worker-node'
 import { TwitterClient } from 'twitter-api-client'
 
@@ -45,7 +45,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
 

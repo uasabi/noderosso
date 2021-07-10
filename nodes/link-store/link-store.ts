@@ -1,6 +1,6 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './link-store.lib'
-import { isAction, upgradeAction, isEvent } from './link-store.common'
+import { isAction, actions, isEvent } from './link-store.common'
 import { WorkerNode } from '../worker-node'
 import { asyncContext } from '../context'
 
@@ -15,7 +15,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
   RED.nodes.registerType('linkstore', LinkStoreNode)

@@ -1,7 +1,7 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './circular-buffer.lib'
 import { asyncContext } from '../context'
-import { isAction, upgradeAction, isEvent } from './circular-buffer.common'
+import { isAction, isEvent, actions } from './circular-buffer.common'
 import { WorkerNode } from '../worker-node'
 
 module.exports = function (RED: Red) {
@@ -27,7 +27,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
   RED.nodes.registerType('circularbuffer', CircularBuffer)

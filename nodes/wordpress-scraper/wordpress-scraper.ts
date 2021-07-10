@@ -1,6 +1,6 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './wordpress-scraper.lib'
-import { isAction, upgradeAction, isEvent } from './wordpress-scraper.common'
+import { isAction, actions, isEvent } from './wordpress-scraper.common'
 import { WorkerNode } from '../worker-node'
 import { URL } from 'url'
 
@@ -22,7 +22,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
   RED.nodes.registerType('wordpressscraper', WordpressNode)

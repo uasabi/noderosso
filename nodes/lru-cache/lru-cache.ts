@@ -2,7 +2,7 @@ import humanInterval from 'human-interval'
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './lru-cache.lib'
 import { asyncContext } from '../context'
-import { upgradeAction, isAction, isEvent } from './lru-cache.common'
+import { actions, isAction, isEvent } from './lru-cache.common'
 import { WorkerNode } from '../worker-node'
 
 module.exports = function (RED: Red) {
@@ -24,7 +24,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
   RED.nodes.registerType('lrucache', LRUCache)
