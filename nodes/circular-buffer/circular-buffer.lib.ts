@@ -1,4 +1,4 @@
-import { AsyncContext } from '../context'
+import { AsyncContext } from '@noderosso/packages/context'
 import { Node } from 'node-red'
 import { Events, Event, Actions } from './circular-buffer.common'
 

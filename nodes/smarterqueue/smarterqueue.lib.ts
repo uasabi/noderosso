@@ -1,7 +1,7 @@
 import humanInterval from 'human-interval'
 import { Node } from 'node-red'
 import RRule, { RRuleSet } from 'rrule'
-import { AsyncContext } from '../context'
+import { AsyncContext } from '@noderosso/packages/context'
 import {
   Actions,
   Events,

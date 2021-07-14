@@ -1,7 +1,7 @@
 import { Worker, isMainThread, parentPort, WorkerOptions } from 'worker_threads'
 import { resolve } from 'path'
 import { MessagePort } from 'worker_threads'
-import { Channel, Loop } from '../channel'
+import { Channel, Loop } from '@noderosso/packages/channel'
 import { Commands, Reply, isCommand } from './classifier.common'
 import { inspect } from 'util'
 import { trainModel, GenericClassifier } from './classifier.model'

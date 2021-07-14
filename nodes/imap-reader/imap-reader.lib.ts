@@ -1,6 +1,6 @@
 import { Node } from 'node-red'
 import ImapClient, { Mailbox } from 'emailjs-imap-client'
-import { asyncContext } from '../context'
+import { asyncContext } from '@noderosso/packages/context'
 import { simpleParser } from 'mailparser'
 import { Actions, Events, Event, isGmailEmail } from './imap-reader.common'
 import { inspect } from 'util'

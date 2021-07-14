@@ -93,6 +93,7 @@ test_suite(
     name = "all",
     tests = [
         "//nodes:tslint",
-        "//summarice:summarice_test",
+        "//packages/summarice:summarice_test",
+        "//packages/channel:channel_test",
     ] + ["{}:test".format(n) for n in NODES] + ["{}:tslint".format(n) for n in NODES],
 )

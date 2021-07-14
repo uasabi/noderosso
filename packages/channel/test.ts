@@ -1,5 +1,5 @@
 import test from 'tape'
-import { Channel, Loop } from './channel'
+import { Channel, Loop } from '.'
 
 test('it should only trigger once', (assert) => {
   assert.plan(1)

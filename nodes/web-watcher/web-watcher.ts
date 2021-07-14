@@ -1,8 +1,8 @@
 import url from 'url'
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './web-watcher.lib'
-import { asyncContext } from '../context'
-import { WorkerNode } from '../worker-node'
+import { asyncContext } from '@noderosso/packages/context'
+import { WorkerNode } from '@noderosso/packages/worker_node'
 import { isEvent, isAction, upgradeAction } from './web-watcher.common'
 
 module.exports = function (RED: Red) {

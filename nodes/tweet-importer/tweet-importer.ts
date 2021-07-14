@@ -1,7 +1,7 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { csv2Tweets, Setup } from './tweet-importer.lib'
 import { isAction, upgradeAction, isEvent, Tweet } from './tweet-importer.common'
-import { WorkerNode } from '../worker-node'
+import { WorkerNode } from '@noderosso/packages/worker_node'
 import { Request, Response } from 'express'
 import { readFileSync } from 'fs'
 import { join } from 'path'

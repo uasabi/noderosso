@@ -14,7 +14,8 @@ node(
         "@npm//rrule",
     ],
     deps = [
-        "//nodes:worker_node",
+        "//packages/worker_node",
+        "//packages/context",
         "//types",
         "@npm//@types/express",
         "@npm//@types/node",

@@ -1,7 +1,7 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './twitter.lib'
 import { isAction, upgradeAction, isEvent } from './twitter.common'
-import { WorkerNode } from '../worker-node'
+import { WorkerNode } from '@noderosso/packages/worker_node'
 import { TwitterClient } from 'twitter-api-client'
 
 module.exports = function (RED: Red) {

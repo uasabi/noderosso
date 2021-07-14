@@ -1,4 +1,4 @@
-import { Channel, Loop } from './channel'
+import { Channel, Loop } from '@noderosso/packages/channel'
 import { Node } from 'node-red'
 import { inspect } from 'util'
 import { setTimeout } from 'timers'
@@ -29,7 +29,7 @@ export function WorkerNode<Actions, Events>({
 
   const unsubscribe = Loop<QueueItem>(
     channel,
-    async (messages) => {
+    async (messages: any) => {
       for (const [message, send, done] of messages) {
         const wrappedSend = (event: Events) => {
           if (isEvent(event)) {
@@ -51,7 +51,7 @@ export function WorkerNode<Actions, Events>({
         }
       }
     },
-    (error) => node.error(inspect(error)),
+    (error: any) => node.error(inspect(error)),
   )
 
   node.on('close', (removed, done) => {

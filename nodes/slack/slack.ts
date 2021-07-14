@@ -1,5 +1,5 @@
 import { Red, Node, NodeProperties } from 'node-red'
-import { WorkerNode } from '../worker-node'
+import { WorkerNode } from '@noderosso/packages/worker_node'
 import { isAction, isEvent, upgradeAction } from './slack.common'
 import { Setup, SetupArg } from './slack.lib'
 

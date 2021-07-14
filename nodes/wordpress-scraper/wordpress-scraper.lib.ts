@@ -1,6 +1,6 @@
 import { Node } from 'node-red'
 import { Actions, Events, Event } from './wordpress-scraper.common'
-import { axios, prettyAxiosErrors, AxiosResponse } from '../axios'
+import { axios, prettyAxiosErrors, AxiosResponse } from '@noderosso/packages/axios'
 import * as chrono from 'chrono-node'
 
 export function Setup({ node, baseUrl }: { node: Node; baseUrl: string }) {

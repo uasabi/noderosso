@@ -1,7 +1,7 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './postgres.lib'
 import { upgradeAction, isAction, isEvent } from './postgres.common'
-import { WorkerNode } from '../worker-node'
+import { WorkerNode } from '@noderosso/packages/worker_node'
 
 module.exports = function (RED: Red) {
   function Postgres(this: Node, config: NodeProperties & { sql: string }) {

@@ -1,8 +1,8 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './smarterqueue.lib'
 import { isEvent, actions } from './smarterqueue.common'
-import { WorkerNode } from '../worker-node'
-import { asyncContext } from '../context'
+import { WorkerNode } from '@noderosso/packages/worker_node'
+import { asyncContext } from '@noderosso/packages/context'
 import RRule, { RRuleSet, rrulestr } from 'rrule'
 import { inspect } from 'util'
 

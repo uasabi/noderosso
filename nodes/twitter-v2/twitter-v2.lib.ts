@@ -1,6 +1,6 @@
 import { Node } from 'node-red'
 import { Actions, Events, Event } from './twitter-v2.common'
-import { axios, prettyAxiosErrors, AxiosResponse } from '../axios'
+import { axios, prettyAxiosErrors, AxiosResponse } from '@noderosso/packages/axios'
 import { inspect } from 'util'
 import { TwitterClient } from 'twitter-api-client'
 import * as z from 'zod'

@@ -1,7 +1,7 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './sendgrid-extended.lib'
 import { isAction, upgradeAction, isEvent } from './sendgrid-extended.common'
-import { WorkerNode } from '../worker-node'
+import { WorkerNode } from '@noderosso/packages/worker_node'
 import sendgrid from '@sendgrid/mail'
 import * as z from 'zod'
 

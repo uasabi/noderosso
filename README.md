@@ -65,7 +65,7 @@ The node picks up a message and runs it to completion.
 
 After that, it consumes a new message from the queue or waits for new messages.
 
-The code for such a queue mechanism is encapsulated in the [worker-node.ts](nodes/worker-node.ts) file.
+The code for such a queue mechanism is encapsulated in the [worker-node.ts](packages/worker_node/index.ts) file.
 
 Messaged that are received and sent are checked for validity using [zod](https://github.com/colinhacks/zod).
 

@@ -1,10 +1,10 @@
 import { Node } from 'node-red'
 import Parser, { Item } from 'rss-parser'
-import { AsyncContext } from '../context'
+import { AsyncContext } from '@noderosso/packages/context'
 import { Events, Event, Actions } from './feedparse.common'
 import { inspect } from 'util'
 import { URL } from 'url'
-import { axios, prettyAxiosErrors, AxiosResponse } from '../axios'
+import { axios, prettyAxiosErrors, AxiosResponse } from '@noderosso/packages/axios'
 import { parseDate } from 'chrono-node'
 
 export function Setup({ context, ttl, node, url }: { context: AsyncContext; ttl: number; node: Node; url: string }) {

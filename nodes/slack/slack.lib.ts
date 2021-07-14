@@ -1,6 +1,5 @@
 import { Node } from 'node-red'
-import puppeteer from 'puppeteer-extra'
-import * as z from 'zod'
+import { connect } from '@noderosso/packages/puppeteer'
 import { Actions, Events, Event } from './slack.common'
 
 export type SetupArg = {
@@ -18,7 +17,7 @@ export function Setup(setupArg: SetupArg) {
         let browser
 
         try {
-          browser = await puppeteer.connect({ browserWSEndpoint: 'ws://localhost:3000' })
+          browser = await connect()
           const page = await browser.newPage()
 
           await page.goto(channelLink)
@@ -55,6 +54,9 @@ export function Setup(setupArg: SetupArg) {
           await page.waitForSelector(browserSelector)
           await page.click(browserSelector)
           node.log(`Navigated to ${channelLink}`)
+
+          //TODO: if the user set status to `away`, the popup to ask for
+          // set `active` will show up here and the message probably won't be sent out
 
           // write and send messsage
           await page.waitForSelector('.ql-editor')

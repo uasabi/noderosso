@@ -1,8 +1,8 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './circular-buffer.lib'
-import { asyncContext } from '../context'
+import { asyncContext } from '@noderosso/packages/context'
 import { isAction, upgradeAction, isEvent } from './circular-buffer.common'
-import { WorkerNode } from '../worker-node'
+import { WorkerNode } from '@noderosso/packages/worker_node'
 
 module.exports = function (RED: Red) {
   function CircularBuffer(

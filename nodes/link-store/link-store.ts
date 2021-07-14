@@ -1,8 +1,8 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './link-store.lib'
 import { isAction, upgradeAction, isEvent } from './link-store.common'
-import { WorkerNode } from '../worker-node'
-import { asyncContext } from '../context'
+import { WorkerNode } from '@noderosso/packages/worker_node'
+import { asyncContext } from '@noderosso/packages/context'
 
 module.exports = function (RED: Red) {
   function LinkStoreNode(this: Node, config: NodeProperties) {

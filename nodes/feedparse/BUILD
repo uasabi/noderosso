@@ -11,8 +11,9 @@ node(
         "@npm//tape",
     ],
     deps = [
-        "//nodes:axios",
-        "//nodes:worker_node",
+        "//packages/axios",
+        "//packages/worker_node",
+        "//packages/context",
         "//types",
         "@npm//@types/node",
         "@npm//human-interval",

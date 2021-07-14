@@ -1,6 +1,6 @@
 import { Node } from 'node-red'
 import { Actions, Events, Event } from './reddit-scraper.common'
-import { axios, prettyAxiosErrors, AxiosResponse } from '../axios'
+import { axios, prettyAxiosErrors, AxiosResponse } from '@noderosso/packages/axios'
 import * as chrono from 'chrono-node'
 import { URL } from 'url'
 import { differenceInHours } from 'date-fns'
