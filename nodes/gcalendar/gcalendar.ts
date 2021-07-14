@@ -1,6 +1,6 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './gcalendar.lib'
-import { isAction, upgradeAction, isEvent } from './gcalendar.common'
+import { isAction, actions, isEvent } from './gcalendar.common'
 import { WorkerNode } from '../worker-node'
 import { google } from 'googleapis'
 import { urlencoded, json, Request, Response } from 'express'
@@ -26,7 +26,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
 

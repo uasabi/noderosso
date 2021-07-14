@@ -1,6 +1,6 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './sendgrid-extended.lib'
-import { isAction, upgradeAction, isEvent } from './sendgrid-extended.common'
+import { isAction, actions, isEvent } from './sendgrid-extended.common'
 import { WorkerNode } from '../worker-node'
 import sendgrid from '@sendgrid/mail'
 import * as z from 'zod'
@@ -41,7 +41,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
   RED.nodes.registerType('sendgrid-extended', SendgridExtended)

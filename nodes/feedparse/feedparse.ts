@@ -3,7 +3,7 @@ import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './feedparse.lib'
 import { asyncContext } from '../context'
 import humanInterval from 'human-interval'
-import { isEvent, upgradeAction, isAction } from './feedparse.common'
+import { isEvent, isAction, actions } from './feedparse.common'
 import { WorkerNode } from '../worker-node'
 
 module.exports = function (RED: Red) {
@@ -29,7 +29,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
 

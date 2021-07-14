@@ -2,26 +2,26 @@ import { Channel, Loop } from './channel'
 import { Node } from 'node-red'
 import { inspect } from 'util'
 import { setTimeout } from 'timers'
+import * as z from 'zod'
 
 export function WorkerNode<Actions, Events>({
   node,
   fn,
   isAction = (action: unknown): action is Actions => !!action,
   isEvent,
-  liftAction,
+  actions,
 }: {
   node: Node
   fn: (action: Actions, send: (event: Events) => void, done: () => void) => void | Promise<void>
   isAction?: (action: unknown) => action is Actions
   isEvent: (event: unknown) => event is Events
-  liftAction: (value: unknown) => Actions | undefined
+  actions: z.ZodAny
 }) {
   type QueueItem = [Actions, (events: Events) => void, () => void]
   const channel = new Channel()
   node.on('input', (message, send, done) => {
-    const action = liftAction(message)
-    if (!isAction(action)) {
-      node.warn(`Invalid action ${inspect(action)}`)
+    const action = upgradeAction(node, actions, message)
+    if (action === undefined) {
       return done()
     }
     channel.put<QueueItem>([action, send, done])
@@ -63,4 +63,37 @@ export function WorkerNode<Actions, Events>({
 
 function time() {
   return new Date().toISOString().substr(11, 5)
+}
+
+export function upgradeAction(node: Node, actions: z.ZodAny, message: any): z.infer<typeof actions> | undefined {
+  const validate = actions.safeParse(message)
+  if (!validate.success) {
+    const { fieldErrors } = validate.error.flatten()
+    if ('topic' in fieldErrors) {
+      for (const topicErr of fieldErrors.topic!) {
+        // if the error message look like this: `Expected XXX.V2, received XXX.V1`
+        // the action is upgradeable, so we upgrade the action to XXX.V2
+        if (topicErr.includes('Expected') && topicErr.includes(', received')) {
+          const upgradedTopic = topicErr.substring('Expected'.length + 1, topicErr.indexOf(', '))
+
+          const upgradedMessage = { ...message, topic: upgradedTopic }
+          node.log(
+            [
+              `Original message: ${JSON.stringify(message, null, 2)}`,
+              `upgraded to ${JSON.stringify(upgradedMessage, null, 2)}`,
+            ].join('\n'),
+          )
+
+          const validate = actions.safeParse(upgradedMessage)
+          if (validate.success) {
+            return validate.data
+          } else {
+            node.warn(`Invalid action ${inspect(upgradedMessage)}`)
+            return undefined
+          }
+        }
+      }
+    }
+  }
+  return message
 }

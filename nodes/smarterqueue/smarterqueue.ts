@@ -27,20 +27,7 @@ module.exports = function (RED: Red) {
       fn: Setup({ node, context, rrule, circuitBreakerMaxEmit, newDate: () => new Date() }),
       isEvent,
       node,
-      liftAction: (action: unknown) => {
-        const validate = actions.safeParse(action)
-
-        if (!validate.success) {
-          const { fieldErrors, formErrors } = validate.error.flatten()
-          const errorMessages = Object.keys(fieldErrors).map((it) => {
-            return `${it}: ${fieldErrors[it]!.join(', ')}`
-          })
-          node.error([...errorMessages, formErrors].join('\n'))
-          return undefined
-        } else {
-          return validate.data
-        }
-      },
+      actions,
     })
   }
   RED.nodes.registerType('smarterqueue', SmarterQueue)

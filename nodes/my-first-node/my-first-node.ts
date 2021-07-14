@@ -1,6 +1,6 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './my-first-node.lib'
-import { isAction, upgradeAction, isEvent } from './my-first-node.common'
+import { isAction, actions, isEvent } from './my-first-node.common'
 import { WorkerNode } from '../worker-node'
 
 module.exports = function (RED: Red) {
@@ -13,7 +13,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
   RED.nodes.registerType('myfirstnode', MyFirstNode)

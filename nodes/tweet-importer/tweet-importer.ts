@@ -1,6 +1,6 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { csv2Tweets, Setup } from './tweet-importer.lib'
-import { isAction, upgradeAction, isEvent, Tweet } from './tweet-importer.common'
+import { isAction, actions, isEvent, Tweet } from './tweet-importer.common'
 import { WorkerNode } from '../worker-node'
 import { Request, Response } from 'express'
 import { readFileSync } from 'fs'
@@ -37,7 +37,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
 

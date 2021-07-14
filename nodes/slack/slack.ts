@@ -1,6 +1,6 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { WorkerNode } from '../worker-node'
-import { isAction, isEvent, upgradeAction } from './slack.common'
+import { isAction, isEvent, actions } from './slack.common'
 import { Setup, SetupArg } from './slack.lib'
 
 module.exports = function (RED: Red) {
@@ -39,7 +39,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
 

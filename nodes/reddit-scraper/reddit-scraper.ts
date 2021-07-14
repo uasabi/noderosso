@@ -1,6 +1,6 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './reddit-scraper.lib'
-import { isAction, upgradeAction, isEvent } from './reddit-scraper.common'
+import { isAction, actions, isEvent } from './reddit-scraper.common'
 import { WorkerNode } from '../worker-node'
 
 module.exports = function (RED: Red) {
@@ -29,7 +29,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
   RED.nodes.registerType('redditscraper', RedditScraperNode)

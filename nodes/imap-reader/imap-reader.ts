@@ -1,7 +1,7 @@
 import { Red, Node, NodeProperties } from 'node-red'
 import { Setup } from './imap-reader.lib'
 import { WorkerNode } from '../worker-node'
-import { isEvent, upgradeAction, isAction } from './imap-reader.common'
+import { isEvent, actions, isAction } from './imap-reader.common'
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
@@ -36,7 +36,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
   RED.nodes.registerType('imap-reader', ImapReader, {

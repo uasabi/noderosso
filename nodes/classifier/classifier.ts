@@ -9,7 +9,7 @@ import toHtml from 'hast-util-to-html'
 import { selectAll } from 'hast-util-select'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { DocumentRecord, upgradeAction, isAction, isEvent } from './classifier.common'
+import { DocumentRecord, isAction, isEvent, actions } from './classifier.common'
 import { WorkerNode } from '../worker-node'
 import { Setup } from './classifier.lib'
 import { setTimeout } from 'timers'
@@ -70,7 +70,7 @@ module.exports = function (RED: Red) {
       isAction,
       isEvent,
       node,
-      liftAction: (action: any) => upgradeAction(action, node.warn),
+      actions,
     })
   }
   RED.nodes.registerType('classifier', ClassifierNode)
